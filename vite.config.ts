@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => {
     // Get API key from environment, default to empty string if not set
     const apiKey = env.GEMINI_API_KEY || '';
     return {
+      base: '/gentrack-portal/',
       server: {
         port: 3000,
         host: '0.0.0.0',

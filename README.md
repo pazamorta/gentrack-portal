@@ -35,3 +35,29 @@ View your app in AI Studio: https://ai.studio/apps/drive/1jXJ3j_-bhmMEOEgnJybM4Y
    ```
 
 **Important:** Never commit `.env.local` to git. It's already in `.gitignore` to protect your API key.
+
+## GitHub Pages Deployment
+
+This project uses GitHub Actions to automatically build and deploy to GitHub Pages. The API key is injected during the build process using GitHub Secrets.
+
+### Setting up GitHub Secrets
+
+1. Go to your repository on GitHub
+2. Navigate to **Settings** → **Secrets and variables** → **Actions**
+3. Click **New repository secret**
+4. Name: `GEMINI_API_KEY`
+5. Value: Your Gemini API key
+6. Click **Add secret**
+
+The GitHub Actions workflow will automatically:
+- Build the app with the API key from secrets
+- Deploy to GitHub Pages on every push to `main`
+
+### Manual Deployment
+
+You can also deploy manually using:
+```bash
+npm run deploy
+```
+
+Note: Manual deployment won't include the API key unless you have `.env.local` set up locally.

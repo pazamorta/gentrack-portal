@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ArrowUp, Mic, Square, Loader2, Volume2 } from "lucide-react";
 import { GoogleGenAI, Modality } from "@google/genai";
+import ReactMarkdown from 'react-markdown';
 
 // --- Audio Helper Functions ---
 
@@ -409,7 +410,7 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
                   ? "Listening..."
                   : "Ask anything about your energy operations..."
               }
-              className="flex-1 bg-transparent border-none outline-none px-6 text-gray-800 placeholder-gray-500 text-lg h-12"
+              className="flex-1 bg-transparent border-none outline-none px-6 text-gray-800 placeholder-gray-500 text-lg h-12 font-display"
               disabled={isLoading || isRecording}
             />
 
@@ -433,7 +434,7 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
 
               {/* Send Button */}
               <button
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={isLoading || (!inputValue && !isRecording)}
                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
                   inputValue
@@ -461,7 +462,7 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
                     className="w-full px-6 py-3 text-left hover:bg-gray-50 transition-colors duration-150 flex items-center gap-3 group"
                   >
                     <span className="text-gray-400 text-sm group-hover:text-gray-600">⌘</span>
-                    <p className="text-gray-700 text-sm font-medium flex-1 group-hover:text-gray-900">
+                    <p className="text-gray-700 text-sm font-display font-medium flex-1 group-hover:text-gray-900">
                       {question}
                     </p>
                     <span className="text-xs text-gray-400 group-hover:text-gray-600">Enter</span>
@@ -480,7 +481,19 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
                 Oxygen AI
                 {isPlaying && <Volume2 size={14} className="animate-pulse" />}
               </div>
-              <p className="text-gray-200 text-lg leading-relaxed">{response}</p>
+              <div className="text-gray-200 text-lg leading-relaxed markdown-content">
+                <ReactMarkdown
+                  components={{
+                    strong: ({node, ...props}) => <span className="font-bold text-white" {...props} />,
+                    p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                    ul: ({node, ...props}) => <ul className="list-disc list-inside mb-2" {...props} />,
+                    li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                    a: ({node, ...props}) => <a className="text-[#00E599] hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
+                  }}
+                >
+                  {response}
+                </ReactMarkdown>
+              </div>
             </div>
 
             {/* Follow-up Questions */}
@@ -494,7 +507,7 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
                       onClick={() => handleQuickQuestion(question)}
                       className="bg-surface/50 border border-white/10 rounded-xl p-4 text-left hover:bg-surface/70 hover:border-white/20 transition-all duration-300 text-gray-200 hover:text-white group"
                     >
-                      <p className="text-sm font-medium group-hover:translate-x-1 transition-transform">
+                      <p className="text-sm font-display font-medium group-hover:translate-x-1 transition-transform">
                         {question}
                       </p>
                     </button>

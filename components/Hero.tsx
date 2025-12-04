@@ -5,7 +5,7 @@ import { ChatInterface } from './ChatInterface';
 
 export const Hero: React.FC = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-4 pt-32 pb-20 overflow-hidden">
+    <section className="relative z-20 min-h-screen flex items-center justify-center px-4 pt-32 pb-20">
       <div className="max-w-5xl w-full text-center z-10 space-y-8 flex flex-col items-center">
         
         {/* Badge */}
@@ -31,7 +31,7 @@ export const Hero: React.FC = () => {
         {/* AI Chat Interface - target for "AI Assistant" nav link */}
         <div
           id="ai-assistant"
-          className="w-full max-w-2xl z-20 animate-fade-in-up delay-300 mt-16"
+          className="w-full max-w-2xl z-50 animate-fade-in-up delay-300 mt-16"
           style={{ scrollMarginTop: '100px' }}
         >
             <ChatInterface />

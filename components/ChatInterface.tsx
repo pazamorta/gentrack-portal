@@ -41,10 +41,34 @@ export const ChatInterface: React.FC = () => {
   const [response, setResponse] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showQuickQuestions, setShowQuickQuestions] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close quick questions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setShowQuickQuestions(false);
+      }
+    };
+
+    if (showQuickQuestions) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [showQuickQuestions]);
 
   // Get API key from environment
   // Vite injects process.env.API_KEY from GEMINI_API_KEY env variable
@@ -60,21 +84,41 @@ export const ChatInterface: React.FC = () => {
   const ai = apiKey && apiKey !== 'undefined' ? new GoogleGenAI({ apiKey }) : null;
 
   const SITE_CONTEXT = `
-    You are Oxygen AI, the intelligent assistant for the Oxygen energy platform.
+    You are Oxygen AI, the intelligent assistant for the Oxygen energy platform (powered by Gentrack).
     
-    Website Context:
+    Website Context (from this portal):
     - Mission: Sustainable Energy for Every Scale. Power operations with smarter energy, optimize in real-time.
-    - Features: Ironclad Protection (encryption), Effortless Connections (cloud-native), Ready to Grow (scalable tools).
-    - Pricing: Starter (Free, 3 users), Pro ($49/mo, 10 users), Enterprise ($149/mo, Unlimited).
-    - Stats: 99.99% Reliability, 1M+ Users, 24/7 Support.
-    - Security: Full-spectrum encryption, SOC2 compliance standards.
+    - Features: Resilient Operations (enterprise-grade security), Unified Utility Core (electricity, gas, water), Future-Proof Scale (API-first tools).
+    - Platform: Cloud-native, composable architecture with integration layer, utilities best-practice library.
+    - Solutions: Transform core utility operations, reduce cost-to-serve, accelerate innovation.
+    - Insights: Business and data applications, dashboards and analytics, actionable insights.
+    - Energy Domains: Water (real-time monitoring, leakage insights), Electricity (AI-driven optimization), Gas (end-to-end tracking).
+    
+    IMPORTANT: For questions about topics NOT covered on this portal (such as detailed product specifications, implementation guides, technical documentation, company history, or enterprise features), you should reference and use information from the official Gentrack website at https://www.gentrack.com. When referencing Gentrack.com, mention that users can find more detailed information there.
     
     Your goal is to help users optimize their energy operations and answer questions about the platform concisely.
     Keep answers under 50 words unless asked for more detail.
   `;
 
-  const handleSend = async () => {
-    if (!inputValue.trim()) return;
+  const quickQuestions = [
+    "How can I optimize my utility operations?",
+    "What energy domains do you support?",
+    "How does the platform integrate with existing systems?",
+    "What insights can I get from my energy data?"
+  ];
+
+  const handleQuickQuestion = (question: string) => {
+    setInputValue(question);
+    setShowQuickQuestions(false);
+    // Auto-submit the question
+    setTimeout(() => {
+      handleSend(question);
+    }, 100);
+  };
+
+  const handleSend = async (customQuestion?: string) => {
+    const questionToSend = customQuestion || inputValue;
+    if (!questionToSend.trim()) return;
 
     // Check if API key is configured
     if (!ai) {
@@ -84,8 +128,11 @@ export const ChatInterface: React.FC = () => {
 
     setIsLoading(true);
     setResponse(null);
-    const userPrompt = inputValue;
-    setInputValue("");
+    const userPrompt = questionToSend;
+    if (!customQuestion) {
+      setInputValue("");
+    }
+    setShowQuickQuestions(false);
 
     try {
       // 1. Generate Text Response
@@ -251,8 +298,15 @@ export const ChatInterface: React.FC = () => {
     }
   };
 
+  // Hide quick questions when response appears
+  useEffect(() => {
+    if (response) {
+      setShowQuickQuestions(false);
+    }
+  }, [response]);
+
   return (
-    <div className="w-full max-w-2xl mx-auto animate-fade-in-up delay-200 font-sans">
+    <div className="w-full max-w-2xl mx-auto animate-fade-in-up delay-200 font-sans" ref={containerRef}>
       <div className="flex flex-col gap-6 p-4 rounded-3xl">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
@@ -261,15 +315,51 @@ export const ChatInterface: React.FC = () => {
           </h2>
         </div>
 
+        {/* Quick Questions */}
+        {showQuickQuestions && !isLoading && !response && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 animate-in fade-in slide-in-from-top-2">
+            {quickQuestions.map((question, index) => (
+              <button
+                key={index}
+                onClick={() => handleQuickQuestion(question)}
+                className="bg-surface/50 border border-white/10 rounded-xl p-4 text-left hover:bg-surface/70 hover:border-white/20 transition-all duration-300 text-gray-200 hover:text-white group"
+              >
+                <p className="text-sm font-medium group-hover:translate-x-1 transition-transform">
+                  {question}
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Chat Input Box */}
         <div className="relative group">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-[#9F55FF] to-[#5588FF] rounded-full opacity-30 group-hover:opacity-60 transition duration-500 blur"></div>
           <div className="relative bg-white rounded-full flex items-center p-2 pr-2 shadow-xl">
             <input
+              ref={inputRef}
               type="text"
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                if (e.target.value.trim()) {
+                  setShowQuickQuestions(false);
+                } else {
+                  setShowQuickQuestions(true);
+                }
+              }}
+              onFocus={() => {
+                if (!inputValue.trim() && !response) {
+                  setShowQuickQuestions(true);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSend();
+                } else if (e.key === "Escape") {
+                  setShowQuickQuestions(false);
+                }
+              }}
               placeholder={
                 isRecording
                   ? "Listening..."

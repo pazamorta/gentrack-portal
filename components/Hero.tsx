@@ -21,7 +21,7 @@ export const Hero: React.FC = () => {
         <div className="relative w-full max-w-4xl mx-auto perspective-1000 animate-fade-in-up delay-200 group">
              <div className="relative z-10 transform transition-transform duration-700 hover:scale-[1.02]">
                 <video 
-                    src="/Numbers.mp4" 
+                    src={`${import.meta.env.BASE_URL}Numbers.mp4`}
                     autoPlay
                     loop
                     muted

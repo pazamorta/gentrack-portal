@@ -30,7 +30,7 @@ export const PlatformSection: React.FC = () => {
           <div className="order-1 lg:order-1">
             <div className="relative w-full rounded-3xl overflow-hidden border border-white/10 bg-surface/50 backdrop-blur-xl shadow-2xl">
               <img
-                src="/Platform.gif"
+                src={`${import.meta.env.BASE_URL}Platform.gif`}
                 alt="Platform visualization"
                 className="w-full h-auto"
               />

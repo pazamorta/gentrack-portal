@@ -4,14 +4,14 @@ import { FeatureTab } from '../types';
 
 // Energy domain cards for Water, Electricity, and Gas.
 // These drive both the left-hand marketing boxes and the right-hand visual.
-const tabs: FeatureTab[] = [
+const getTabs = (): FeatureTab[] => [
   {
     id: 'water',
     title: 'Water',
     description:
       'Digitise your water network with real-time monitoring, leakage insights, and demand forecasting in a single SaaS control room.',
     cta: 'Optimise Water',
-    image: '/Spark.gif',
+    image: `${import.meta.env.BASE_URL}Spark.gif`,
   },
   {
     id: 'electricity',
@@ -32,6 +32,7 @@ const tabs: FeatureTab[] = [
 ];
 
 export const Showcase: React.FC = () => {
+  const tabs = getTabs();
   const [activeTabId, setActiveTabId] = useState(tabs[0].id);
 
   return (

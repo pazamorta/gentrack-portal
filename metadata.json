@@ -1,0 +1,7 @@
+{
+  "name": "Vexel AI",
+  "description": "A futuristic AI-powered website merging spatial design, interactivity, and intelligent systems.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

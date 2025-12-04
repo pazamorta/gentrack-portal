@@ -1,0 +1,140 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+
+.ocean {
+  height: 150px; /* Increased height */
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(to top, rgba(1, 88, 113, 0.3), transparent); /* Gradient based on requested color */
+  z-index: 0;
+  pointer-events: none;
+}
+
+.wave {
+  background: url(https://s3-us-west-2.amazonaws.com/s.cdpn.io/85486/wave.svg) repeat-x; 
+  position: absolute;
+  top: -198px;
+  width: 6400px;
+  height: 198px;
+  animation: wave 7s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+  transform: translate3d(0, 0, 0);
+  opacity: 0.3; /* Increased opacity */
+}
+
+/* If the SVG is white, opacity 0.03 on dark background will look like faint white waves. 
+   If we want "dark" waves, we might need to invert it or use a different blend mode. 
+   Let's stick to simple opacity first as it mimics "reflection". 
+*/
+
+.wave:nth-of-type(2) {
+  top: -175px;
+  animation: wave 7s cubic-bezier(0.36, 0.45, 0.63, 0.53) -0.125s infinite,
+    swell 7s ease -1.25s infinite;
+  opacity: 0.5; /* Higher opacity for the second wave */
+}
+
+@keyframes wave {
+  0% {
+    margin-left: 0;
+  }
+  100% {
+    margin-left: -1600px;
+  }
+}
+
+@keyframes swell {
+  0%, 100% {
+    transform: translate3d(0,-25px,0);
+  }
+  50% {
+    transform: translate3d(0,5px,0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Chart Styles */
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  background-image: repeating-radial-gradient(
+    center center,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.1) 2px,
+    transparent 2px,
+    transparent 100%
+  );
+  background-size: 29px 29px;
+  background-position: -11px 11px;
+}
+
+.chart-dataset {
+  transform-origin: bottom;
+  transform: scaleY(0.01);
+  opacity: 0.5;
+}
+
+.chart-loaded .chart-dataset {
+  opacity: 1;
+  animation: chart-raise 0.5s ease forwards;
+}
+
+.chart-loaded #chart-dataset-1 {
+  animation-delay: 0.2s;
+}
+
+.chart-loaded #chart-dataset-2 {
+  animation-delay: 0.1s;
+}
+
+.chart-loaded #chart-dataset-3 {
+  animation-delay: 0s;
+}
+
+@keyframes chart-raise {
+  0% {
+    transform: scaleY(0.01);
+  }
+  75% {
+    transform: scaleY(1.1);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}

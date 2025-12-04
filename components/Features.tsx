@@ -21,7 +21,7 @@ const features = [
 
 export const Features: React.FC = () => {
   return (
-    <section className="py-24 px-4 bg-background/50 backdrop-blur-sm relative z-10" id="features">
+    <section className="py-24 px-4 bg-background/50 backdrop-blur-sm relative z-0" id="features">
       <div className="max-w-6xl mx-auto">
         <div className="mb-12">
             <h2 className="text-3xl md:text-5xl font-display font-medium mb-4">Your all-in-one SaaS engine.</h2>

@@ -42,6 +42,7 @@ export const ChatInterface: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showQuickQuestions, setShowQuickQuestions] = useState(false);
+  const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -94,7 +95,7 @@ export const ChatInterface: React.FC = () => {
     - Insights: Business and data applications, dashboards and analytics, actionable insights.
     - Energy Domains: Water (real-time monitoring, leakage insights), Electricity (AI-driven optimization), Gas (end-to-end tracking).
     
-    IMPORTANT: For questions about topics NOT covered on this portal (such as detailed product specifications, implementation guides, technical documentation, company history, or enterprise features), you should reference and use information from the official Gentrack website at https://www.gentrack.com. When referencing Gentrack.com, mention that users can find more detailed information there.
+    IMPORTANT: For questions about topics NOT covered on this portal (such as detailed product specifications, implementation guides, technical documentation, company history, or enterprise features), you should reference and use information from the official Engie website at https://www.engie.co.uk/. When referencing engie.co.uk, mention that users can find more detailed information there.
     
     Your goal is to help users optimize their energy operations and answer questions about the platform concisely.
     Keep answers under 50 words unless asked for more detail.
@@ -110,10 +111,66 @@ export const ChatInterface: React.FC = () => {
   const handleQuickQuestion = (question: string) => {
     setInputValue(question);
     setShowQuickQuestions(false);
+    setFollowUpQuestions([]);
     // Auto-submit the question
     setTimeout(() => {
       handleSend(question);
     }, 100);
+  };
+
+  const generateFollowUpQuestions = async (originalQuestion: string, answer: string) => {
+    if (!ai) return;
+
+    try {
+      const prompt = `Based on this question and answer about energy operations, generate exactly 4 short, succinct follow-up questions (max 6-8 words each). Make them concise, specific, and actionable.
+
+Original Question: "${originalQuestion}"
+Answer: "${answer}"
+
+Return only the 4 questions, one per line, without numbering or bullets. Keep each question brief and to the point.`;
+
+      const result = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+      });
+
+      const questionsText = result.text || "";
+      const questions = questionsText
+        .split('\n')
+        .map(q => q.trim())
+        .filter(q => q.length > 0 && !q.match(/^\d+[\.\)]/))
+        .map(q => {
+          // Remove question marks and trim further
+          q = q.replace(/^\?+\s*/, '').trim();
+          // Ensure it's not too long (max 60 chars)
+          if (q.length > 60) {
+            q = q.substring(0, 57) + '...';
+          }
+          return q;
+        })
+        .slice(0, 4);
+
+      if (questions.length > 0) {
+        setFollowUpQuestions(questions);
+      } else {
+        // Fallback questions if generation fails
+        setFollowUpQuestions([
+          "Tell me more",
+          "Integration options?",
+          "Implementation steps?",
+          "Benefits for my org?"
+        ]);
+      }
+    } catch (error) {
+      console.error("Error generating follow-up questions:", error);
+      // Fallback questions on error
+      setFollowUpQuestions([
+        "Tell me more",
+        "Integration options?",
+        "Implementation steps?",
+        "Benefits for my org?"
+      ]);
+    }
   };
 
   const handleSend = async (customQuestion?: string) => {
@@ -128,6 +185,7 @@ export const ChatInterface: React.FC = () => {
 
     setIsLoading(true);
     setResponse(null);
+    setFollowUpQuestions([]);
     const userPrompt = questionToSend;
     if (!customQuestion) {
       setInputValue("");
@@ -148,7 +206,10 @@ export const ChatInterface: React.FC = () => {
       setResponse(textResponse);
       setIsLoading(false);
 
-      // 2. Generate Audio Response (TTS)
+      // 2. Generate Follow-up Questions
+      await generateFollowUpQuestions(userPrompt, textResponse);
+
+      // 3. Generate Audio Response (TTS)
       await speakResponse(textResponse);
     } catch (error) {
       console.error("Error generating content:", error);
@@ -306,31 +367,14 @@ export const ChatInterface: React.FC = () => {
   }, [response]);
 
   return (
-    <div className="w-full max-w-2xl mx-auto animate-fade-in-up delay-200 font-sans" ref={containerRef}>
-      <div className="flex flex-col gap-6 p-4 rounded-3xl">
+    <div className="w-full mx-auto animate-fade-in-up delay-200 font-sans" ref={containerRef}>
+      <div className="flex flex-col gap-6 p-4 rounded-3xl max-w-2xl mx-auto">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
           <h2 className="text-2xl md:text-3xl font-display font-bold text-white/90">
             What would you like to optimize today?
           </h2>
         </div>
-
-        {/* Quick Questions */}
-        {showQuickQuestions && !isLoading && !response && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 animate-in fade-in slide-in-from-top-2">
-            {quickQuestions.map((question, index) => (
-              <button
-                key={index}
-                onClick={() => handleQuickQuestion(question)}
-                className="bg-surface/50 border border-white/10 rounded-xl p-4 text-left hover:bg-surface/70 hover:border-white/20 transition-all duration-300 text-gray-200 hover:text-white group"
-              >
-                <p className="text-sm font-medium group-hover:translate-x-1 transition-transform">
-                  {question}
-                </p>
-              </button>
-            ))}
-          </div>
-        )}
 
         {/* Chat Input Box */}
         <div className="relative group">
@@ -405,18 +449,62 @@ export const ChatInterface: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Quick Questions - Auto-complete dropdown style */}
+          {showQuickQuestions && !isLoading && !response && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="py-2">
+                {quickQuestions.map((question, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleQuickQuestion(question)}
+                    className="w-full px-6 py-3 text-left hover:bg-gray-50 transition-colors duration-150 flex items-center gap-3 group"
+                  >
+                    <span className="text-gray-400 text-sm group-hover:text-gray-600">⌘</span>
+                    <p className="text-gray-700 text-sm font-medium flex-1 group-hover:text-gray-900">
+                      {question}
+                    </p>
+                    <span className="text-xs text-gray-400 group-hover:text-gray-600">Enter</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Response Area */}
         {response && (
-          <div className="bg-surface/80 backdrop-blur-md border border-white/10 rounded-2xl p-6 text-left animate-in fade-in slide-in-from-bottom-2">
-            <div className="flex items-center gap-2 mb-2 text-[#69F0C9] text-sm font-bold uppercase tracking-wider">
-              Oxygen AI
-              {isPlaying && <Volume2 size={14} className="animate-pulse" />}
+          <div className="space-y-4">
+            <div className="bg-surface/80 backdrop-blur-md border border-white/10 rounded-2xl p-6 text-left animate-in fade-in slide-in-from-bottom-2">
+              <div className="flex items-center gap-2 mb-2 text-[#69F0C9] text-sm font-bold uppercase tracking-wider">
+                Oxygen AI
+                {isPlaying && <Volume2 size={14} className="animate-pulse" />}
+              </div>
+              <p className="text-gray-200 text-lg leading-relaxed">{response}</p>
             </div>
-            <p className="text-gray-200 text-lg leading-relaxed">{response}</p>
+
+            {/* Follow-up Questions */}
+            {followUpQuestions.length > 0 && (
+              <div className="animate-in fade-in slide-in-from-bottom-2">
+                <p className="text-sm text-gray-400 mb-3 px-2">Related questions:</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {followUpQuestions.map((question, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleQuickQuestion(question)}
+                      className="bg-surface/50 border border-white/10 rounded-xl p-4 text-left hover:bg-surface/70 hover:border-white/20 transition-all duration-300 text-gray-200 hover:text-white group"
+                    >
+                      <p className="text-sm font-medium group-hover:translate-x-1 transition-transform">
+                        {question}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
+
       </div>
     </div>
   );

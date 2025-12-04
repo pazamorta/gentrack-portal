@@ -28,6 +28,22 @@ export const Features: React.FC = () => {
             <p className="text-secondary text-lg max-w-2xl">Smarter power, gas and water for every business, at any scale.</p>
         </div>
         
+        {/* Numbers Video - Full Width */}
+        <div className="relative w-full perspective-1000 group mb-12">
+          <div className="relative z-10 transform transition-transform duration-700 hover:scale-[1.02]">
+            <video 
+              src={`${import.meta.env.BASE_URL}Numbers.mp4`}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-auto rounded-2xl shadow-2xl border border-white/10 bg-surface/50 backdrop-blur-sm"
+            />
+          </div>
+          {/* Glow effect behind */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-purple-500/20 blur-[100px] -z-10 rounded-full opacity-50 pointer-events-none"></div>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {features.map((feature, index) => (
             <div 

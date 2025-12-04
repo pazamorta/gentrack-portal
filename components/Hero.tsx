@@ -17,22 +17,6 @@ export const Hero: React.FC = () => {
           for Every Scale
         </h1>
 
-        {/* Dashboard Image */}
-        <div className="relative w-full max-w-4xl mx-auto perspective-1000 animate-fade-in-up delay-200 group">
-             <div className="relative z-10 transform transition-transform duration-700 hover:scale-[1.02]">
-                <video 
-                    src={`${import.meta.env.BASE_URL}Numbers.mp4`}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="w-full h-auto rounded-2xl shadow-2xl border border-white/10 bg-surface/50 backdrop-blur-sm"
-                />
-             </div>
-             {/* Glow effect behind */}
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-purple-500/20 blur-[100px] -z-10 rounded-full opacity-50 pointer-events-none"></div>
-        </div>
-
         {/* Subheading */}
         <p className="text-lg md:text-xl text-secondary max-w-2xl mx-auto leading-relaxed animate-fade-in-up delay-300">
           Power your operations with smarter energy. Optimise in real-time, anticipate performance, and grow sustainably at every scale.
@@ -40,7 +24,7 @@ export const Hero: React.FC = () => {
 
         {/* CTAs */}
         <div className="flex flex-col md:flex-row items-center justify-center gap-4 animate-fade-in-up delay-400 pt-4">
-            <Button href="#get-started">Get Started</Button>
+            <Button href="/get-started">Get Started</Button>
             <Button variant="outline">See It in Action</Button>
         </div>
 

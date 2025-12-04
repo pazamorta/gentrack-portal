@@ -13,8 +13,8 @@ export const Footer: React.FC = () => {
         <div className="space-y-6 max-w-xl">
             <h2 className="text-4xl md:text-6xl font-display font-bold tracking-tighter text-white">Launch with Oxygen.</h2>
             <div className="flex flex-wrap gap-4">
-                <Button href="#get-started">Get Started</Button>
-                <Button variant="outline">Learn More</Button>
+                <Button href="/get-started">Get Started</Button>
+
             </div>
             
 

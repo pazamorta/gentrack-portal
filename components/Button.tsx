@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 interface ButtonProps {
   children: React.ReactNode;
@@ -23,6 +24,8 @@ export const Button: React.FC<ButtonProps> = ({
   href
 }) => {
   const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-300 rounded-full";
+  const location = useLocation();
+  const navigate = useNavigate();
   
   const variants = {
     primary: disabled 
@@ -33,7 +36,39 @@ export const Button: React.FC<ButtonProps> = ({
     link: "bg-transparent text-white hover:text-gray-300 p-0 cursor-pointer"
   };
 
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (onClick) {
+      onClick();
+    }
+
+    if (href && href.startsWith('/#')) {
+      const hash = href.substring(2); // Remove /#
+      if (location.pathname === '/') {
+        e.preventDefault();
+        const element = document.getElementById(hash);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Update URL hash without reload
+          window.history.pushState(null, '', `/#${hash}`);
+        }
+      }
+    }
+  };
+
   if (href) {
+    if (href.startsWith('/')) {
+      return (
+        <Link 
+          to={href}
+          className={`${baseStyles} ${variants[variant]} ${className}`}
+          onClick={handleLinkClick}
+        >
+          <span className="mr-2">{children}</span>
+          {icon && <ArrowRight size={16} />}
+        </Link>
+      );
+    }
+
     return (
       <a 
         href={href}

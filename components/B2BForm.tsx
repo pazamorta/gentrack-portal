@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from './Button';
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { InvoiceUploader } from './InvoiceUploader';
+import { salesforceService, ParsedInvoiceData } from '../services/salesforce';
 
 type Step = 1 | 2 | 3;
 
@@ -8,6 +10,7 @@ export const B2BForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [formData, setFormData] = useState({
     companyName: '',
+    companyNumber: '',
     website: '',
     contactName: '',
     email: '',
@@ -23,6 +26,7 @@ export const B2BForm: React.FC = () => {
     budget: '',
     additionalInfo: '',
   });
+  const [invoiceData, setInvoiceData] = useState<ParsedInvoiceData | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -42,7 +46,7 @@ export const B2BForm: React.FC = () => {
   const validateStep = (step: Step): boolean => {
     switch (step) {
       case 1:
-        return !!(formData.companyName && formData.contactName && formData.email && formData.phone && formData.jobTitle);
+        return !!(formData.companyName && formData.companyNumber && formData.contactName && formData.email && formData.phone && formData.jobTitle);
       case 2:
         return !!(formData.industry && formData.companySize);
       case 3:
@@ -50,6 +54,16 @@ export const B2BForm: React.FC = () => {
       default:
         return false;
     }
+  };
+
+  const handleInvoiceParsed = (data: ParsedInvoiceData) => {
+    setInvoiceData(data);
+    setFormData(prev => ({
+      ...prev,
+      companyName: data.companyName || prev.companyName,
+      companyNumber: data.companyNumber || prev.companyNumber,
+      // We could also map other fields if available in the invoice
+    }));
   };
 
   const handleNext = () => {
@@ -64,12 +78,28 @@ export const B2BForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateStep(3)) {
       console.log('Form submitted:', formData);
-      // You can add API call here
-      alert('Thank you! Your request has been submitted successfully.');
+
+      if (invoiceData) {
+        console.log('Creating Salesforce records...');
+        // Merge latest form data into invoice data (in case user edited name)
+        const finalInvoiceData = {
+          ...invoiceData,
+          companyName: formData.companyName,
+          companyNumber: formData.companyNumber,
+        };
+
+        const response = await salesforceService.createRecordsFromInvoice(finalInvoiceData);
+        if (response.success) {
+          console.log(response.message);
+          alert('Success! Your request has been submitted and Salesforce records have been created.');
+        }
+      } else {
+        alert('Thank you! Your request has been submitted successfully.');
+      }
     }
   };
 
@@ -99,13 +129,12 @@ export const B2BForm: React.FC = () => {
                 <div className="flex items-center flex-1">
                   <div className="flex flex-col items-center flex-1">
                     <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
-                        currentStep > step.number
-                          ? 'bg-[#00E599] text-black'
-                          : currentStep === step.number
+                      className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${currentStep > step.number
+                        ? 'bg-[#00E599] text-black'
+                        : currentStep === step.number
                           ? 'bg-white text-black scale-110'
                           : 'bg-white/10 text-gray-400 border-2 border-white/20'
-                      }`}
+                        }`}
                     >
                       {currentStep > step.number ? (
                         <Check size={20} />
@@ -124,9 +153,8 @@ export const B2BForm: React.FC = () => {
                   </div>
                   {index < steps.length - 1 && (
                     <div
-                      className={`h-1 flex-1 mx-2 transition-all duration-500 ${
-                        currentStep > step.number ? 'bg-[#00E599]' : 'bg-white/10'
-                      }`}
+                      className={`h-1 flex-1 mx-2 transition-all duration-500 ${currentStep > step.number ? 'bg-[#00E599]' : 'bg-white/10'
+                        }`}
                       style={{ marginTop: '-24px' }}
                     />
                   )}
@@ -141,7 +169,9 @@ export const B2BForm: React.FC = () => {
           {currentStep === 1 && (
             <div className="animate-fade-in">
               <h3 className="text-2xl font-bold mb-2 text-white">Company and Contact Information</h3>
-              <p className="text-secondary mb-8">Let's start with the basics</p>
+              <p className="text-secondary mb-8">Let's start with the basics. Upload your invoice to auto-fill details.</p>
+
+              <InvoiceUploader onDataParsed={handleInvoiceParsed} />
 
               <div className="space-y-6">
                 <div>
@@ -157,6 +187,22 @@ export const B2BForm: React.FC = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/30 transition-colors"
                     placeholder="Enter company name"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="companyNumber" className="block text-sm font-medium text-gray-300 mb-2">
+                    Company Number *
+                  </label>
+                  <input
+                    type="text"
+                    id="companyNumber"
+                    name="companyNumber"
+                    required
+                    value={formData.companyNumber} // errors here are expected until the state update is processed by the language server, but it's fine since we updated state in the first chunk
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/30 transition-colors"
+                    placeholder="Enter company number"
                   />
                 </div>
 
@@ -334,11 +380,10 @@ export const B2BForm: React.FC = () => {
                     {['Electricity', 'Gas', 'Water'].map((domain) => (
                       <label
                         key={domain}
-                        className={`flex items-center gap-3 cursor-pointer p-4 rounded-xl border transition-all ${
-                          formData.energyDomains.includes(domain.toLowerCase())
-                            ? 'bg-[#00E599]/10 border-[#00E599]/50'
-                            : 'bg-white/5 border-white/10 hover:border-white/20'
-                        }`}
+                        className={`flex items-center gap-3 cursor-pointer p-4 rounded-xl border transition-all ${formData.energyDomains.includes(domain.toLowerCase())
+                          ? 'bg-[#00E599]/10 border-[#00E599]/50'
+                          : 'bg-white/5 border-white/10 hover:border-white/20'
+                          }`}
                       >
                         <input
                           type="checkbox"
@@ -450,11 +495,10 @@ export const B2BForm: React.FC = () => {
               type="button"
               onClick={handlePrevious}
               disabled={currentStep === 1}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${
-                currentStep === 1
-                  ? 'text-gray-500 cursor-not-allowed'
-                  : 'text-white border border-white/20 hover:border-white/40 hover:bg-white/5'
-              }`}
+              className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${currentStep === 1
+                ? 'text-gray-500 cursor-not-allowed'
+                : 'text-white border border-white/20 hover:border-white/40 hover:bg-white/5'
+                }`}
             >
               <ChevronLeft size={20} />
               Previous
@@ -465,11 +509,10 @@ export const B2BForm: React.FC = () => {
                 type="button"
                 onClick={handleNext}
                 disabled={!validateStep(currentStep)}
-                className={`flex items-center gap-2 px-8 py-3 rounded-full font-medium transition-all ${
-                  validateStep(currentStep)
-                    ? 'bg-white text-black hover:bg-gray-200'
-                    : 'bg-white/10 text-gray-500 cursor-not-allowed'
-                }`}
+                className={`flex items-center gap-2 px-8 py-3 rounded-full font-medium transition-all ${validateStep(currentStep)
+                  ? 'bg-white text-black hover:bg-gray-200'
+                  : 'bg-white/10 text-gray-500 cursor-not-allowed'
+                  }`}
               >
                 Next
                 <ChevronRight size={20} />

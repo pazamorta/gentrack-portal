@@ -585,6 +585,7 @@ app.post('/api/salesforce/invoice', async (req, res) => {
                         for (const meterPoint of site.meterPoints) {
                             const servicePointResult = await createRecord('GTCX_Service_Point__c', {
                                 Name: meterPoint.meterNumber || 'Service Point',
+                                GTCX_Service_Type__c: meterPoint.fuelType || 'Electricity',
                                 GTCX_Fuel_Type__c: meterPoint.fuelType || 'Electricity',
                                 GTCX_Postcode__c: meterPoint.postcode || undefined,
                                 GTCX_Opportunity__c: opportunityId,
@@ -608,13 +609,37 @@ app.post('/api/salesforce/invoice', async (req, res) => {
         // 5. FILE UPLOAD
         let fileId;
         if (data.fileContent && data.fileName && accountId) {
+            console.log('Uploading file to Salesforce...');
+            
+            // 1. Create ContentVersion (Linked to Account via FirstPublishLocationId)
             const contentVersionResult = await createRecord('ContentVersion', {
                 Title: data.fileName,
                 PathOnClient: data.fileName,
                 VersionData: data.fileContent,
                 FirstPublishLocationId: accountId 
             });
-            if (contentVersionResult.success) fileId = contentVersionResult.id;
+
+            if (contentVersionResult.success) {
+                const contentVersionId = contentVersionResult.id;
+                console.log('File uploaded. ID:', contentVersionId);
+
+                // 2. Query ContentDocumentId
+                const cvQuery = await query(`SELECT ContentDocumentId FROM ContentVersion WHERE Id = '${contentVersionId}'`);
+                
+                if (cvQuery.totalSize > 0) {
+                    const contentDocumentId = cvQuery.records[0].ContentDocumentId;
+                    
+                    // 3. Link to Opportunity
+                    if (opportunityId) {
+                        await createRecord('ContentDocumentLink', {
+                            ContentDocumentId: contentDocumentId,
+                            LinkedEntityId: opportunityId,
+                            ShareType: 'V'
+                        });
+                        console.log('Linked file to Opportunity:', opportunityId);
+                    }
+                }
+            }
         }
 
         // Response

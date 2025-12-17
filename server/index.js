@@ -582,13 +582,18 @@ app.post('/api/salesforce/invoice', async (req, res) => {
 
                     if (site.meterPoints && site.meterPoints.length > 0) {
                         for (const meterPoint of site.meterPoints) {
-                            const servicePointResult = await createRecord('gtx_sales__Service_Point__c', {
-                                gtx_sales__Market_Identifier__c: meterPoint.mpan || undefined,
-                                gtx_sales__Service_External_Id__c: meterPoint.meterNumber || undefined,
-                                gtx_sales__Service_Type__c: 'Electricity',
-                                gtx_sales__Opportunity__c: opportunityId,
-                                vlocity_cmt__PremisesId__c: premisesId,
-                                gtx_sales__Annual_Consumption__c: data.totalConsumption || undefined
+                            const servicePointResult = await createRecord('GTCX_Service_Point__c', {
+                                Name: meterPoint.meterNumber || 'Service Point',
+                                GTCX_Fuel_Type__c: meterPoint.fuelType || 'Electricity',
+                                GTCX_Postcode__c: meterPoint.postcode || undefined,
+                                GTCX_Opportunity__c: opportunityId,
+                                GTCX_Annual_Consumption__c: meterPoint.annualConsumption || data.totalConsumption || undefined,
+                                GTCX_Product_Preference__c: meterPoint.productPreference || undefined,
+                                GTCX_Duration_Options__c: meterPoint.durationOptions || undefined,
+                                GTCX_Contact_Name__c: meterPoint.contactName || undefined,
+                                GTCX_Contact_Email__c: meterPoint.contactEmail || undefined,
+                                GTCX_Contact_Phone__c: meterPoint.contactPhone || undefined,
+                                GTCX_Company_Number__c: meterPoint.companyNumber || undefined
                             });
                             if (servicePointResult.success) {
                                 createdServicePoints.push({ id: servicePointResult.id, mpan: meterPoint.mpan });
@@ -623,7 +628,8 @@ app.post('/api/salesforce/invoice', async (req, res) => {
                 opportunityId,
                 stage: stageName,
                 sitesCreated: createdPremises.length,
-                servicePointsCreated: createdServicePoints.length
+                servicePointsCreated: createdServicePoints.length,
+                servicePoints: createdServicePoints
             }
         });
 

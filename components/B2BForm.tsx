@@ -42,6 +42,7 @@ export const B2BForm: React.FC = () => {
     accountId: string;
     contactId: string;
     opportunityId: string;
+    servicePoints?: { id: string; mpan: string }[];
   } | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -155,7 +156,16 @@ export const B2BForm: React.FC = () => {
         sitesMap.get(siteName).meterPoints.push({
           mpan: servicePointId,
           meterNumber: servicePointId,
-          address: `${getValue('Address')} ${getValue('Postcode')}`.trim(),
+          address: getValue('Address'),
+          postcode: getValue('Postcode'),
+          fuelType: getValue('Fuel Type'),
+          productPreference: getValue('Product Preference') || getValue('Product Preference*'),
+          durationOptions: getValue('Duration Options') || getValue('Duration Options*'),
+          annualConsumption: getValue('Annual Consumption') || getValue('Annual Consumption*'),
+          contactName: getValue('Service Point Contact Name') || getValue('Service Point Contact Name*'),
+          contactEmail: getValue('Service Point Contact email') || getValue('Service Point Contact email*'),
+          contactPhone: getValue('Service Point Contact tel') || getValue('Service Point Contact tel*'),
+          companyNumber: getValue('Service Point Company Number')
         });
       }
     });
@@ -169,8 +179,6 @@ export const B2BForm: React.FC = () => {
       // @ts-ignore
       sites: parsedSites
     }));
-    
-    alert(`Successfully loaded ${parsedSites.length} sites from spreadsheet.`);
   };
 
   const handleNext = async () => {
@@ -327,6 +335,28 @@ export const B2BForm: React.FC = () => {
                     </a>
                 )}
             </div>
+
+            {submissionSuccess.servicePoints && submissionSuccess.servicePoints.length > 0 && (
+                <div className="mt-8 max-w-3xl mx-auto">
+                    <h3 className="text-white font-medium mb-4 text-center">Service Points Created ({submissionSuccess.servicePoints.length})</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {submissionSuccess.servicePoints.map((sp: any, index: number) => (
+                            <a 
+                                key={sp.id}
+                                href={`${submissionSuccess.instanceUrl}/lightning/r/GTCX_Service_Point__c/${sp.id}/view`}
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="p-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all group flex items-center justify-between"
+                            >
+                                <span className="text-xs text-gray-300">
+                                    {sp.mpan || `SP ${index + 1}`}
+                                </span>
+                                <ExternalLink className="w-3 h-3 text-gray-500 group-hover:text-white transition-colors" />
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="mt-12">
                 <button 
@@ -866,7 +896,7 @@ export const B2BForm: React.FC = () => {
                   {invoiceData?.sites && invoiceData.sites.length > 0 && (
                      <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
                         <p className="text-green-400 text-sm">
-                           ✓ {invoiceData.sites.length} sites loaded from file
+                           Successfully loaded a sites spreadsheet.
                         </p>
                      </div>
                   )}
@@ -893,12 +923,17 @@ export const B2BForm: React.FC = () => {
             {currentStep < 3 ? (
               <button
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
+                  const form = e.currentTarget.closest('form');
+                  if (form && !form.reportValidity()) {
+                    return;
+                  }
+
                   if (validateStep(currentStep)) {
                     handleNext();
                     setValidationError(null);
                   } else {
-                    setValidationError("Please fill in all required fields correctly (including a valid email).");
+                    setValidationError("Please fill in all required fields correctly.");
                   }
                 }}
                 className="flex items-center gap-2 px-8 py-3 rounded-full font-medium transition-all bg-white text-black hover:bg-gray-200"

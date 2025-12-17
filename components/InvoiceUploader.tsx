@@ -40,7 +40,7 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed, 
             const prompt = `
         Analyze this invoice image and extract the following data in strict JSON format:
         {
-          "companyName": "string",
+          "companyName": "string (The CUSTOMER name, usually under 'Customer Details' or 'Bill To'. Do NOT use the supplier logo/name at the top)",
           "companyNumber": "string (if found, otherwise empty)",
           "accountNumber": "string",
           "invoiceNumber": "string",
@@ -65,8 +65,11 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed, 
           ]
         }
         
-        If you find multiple sites or meters, list them all. If specific fields are missing, use null or empty string.
-        Ensure the output is valid JSON only, no markdown formatting.
+        IMPORTANT: 
+        1. The "companyName" is the CUSTOMER who is being billed (e.g. 'Maga Manufacturing', 'John Doe'). It is often located in a 'Customer Details' section.
+        2. Do NOT mistake the Energy Supplier (e.g. British Gas, E.ON, Gentrack, Oxygen) for the customer. The supplier logo is usually at the top or bottom.
+        3. If you find multiple sites or meters, list them all.
+        4. Ensure the output is valid JSON only, no markdown formatting.
       `;
 
             const result = await aiService.generateContent({

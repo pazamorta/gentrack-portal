@@ -352,142 +352,183 @@ app.post('/api/salesforce/lead', async (req, res) => {
  * POST /api/salesforce/invoice
  * Also handles Lead Conversion logic if leadId is present
  */
+/**
+ * Handle Full Form Submission (Invoice + Details)
+ * POST /api/salesforce/invoice
+ * Uses Standard Lead Conversion if leadId is present
+ */
 app.post('/api/salesforce/invoice', async (req, res) => {
     try {
         const data = req.body;
         console.log('📥 Received Form Submission:', data.companyName);
         console.log('   Lead ID:', data.leadId);
 
-        // 1. Account Logic
         let accountId;
-        const existingAccountsQuery = `SELECT Id FROM Account WHERE Name = '${data.companyName.replace(/'/g, "\\'")}' LIMIT 1`;
-        const existingAccounts = await query(existingAccountsQuery);
-
-        // Fields to update/set on Account
-        const accountFields = {
-            Industry: data.industry ? data.industry.charAt(0).toUpperCase() + data.industry.slice(1) : undefined,
-            NumberOfEmployees: data.companySize ? parseInt(data.companySize.split('-')[0]) || undefined : undefined,
-            Website: data.website,
-            Description: `Updated from Web Form on ${new Date().toISOString()}`
-        };
-        
-        // Add budget/timeline to description as they might not have standard fields
-        if(data.budget || data.timeline || data.useCase) {
-             accountFields.Description += `\n\nRequirements:\nUse Case: ${data.useCase}\nTimeline: ${data.timeline}\nBudget: ${data.budget}`;
-        }
-
-        if (existingAccounts.totalSize > 0) {
-            accountId = existingAccounts.records[0].Id;
-            console.log('Found existing account:', accountId);
-            await updateRecord('Account', accountId, accountFields);
-        } else {
-            console.log('Creating new account...');
-            const accountData = {
-                Name: data.companyName,
-                AccountNumber: data.companyNumber || undefined,
-                Type: 'Prospect',
-                ...accountFields
-            };
-            
-            const accountResult = await createRecord('Account', accountData);
-            if (!accountResult.success) {
-                throw new Error('Failed to create Account: ' + JSON.stringify(accountResult.errors));
-            }
-            accountId = accountResult.id;
-        }
-
-        // 2. Lead Conversion (Simulation)
-        // If we have a Lead ID, we should "convert" it by updating its status and linking it to the Account if possible
-        // Since we can't easily use the /convert endpoint via REST JSON without complexity, we'll mimic the result:
-        // - Ensure Contact Exists
-        // - Ensure Opportunity Exists
-        // - Mark Lead as 'Qualified' (or closed) to show it's moved on
-        if (data.leadId) {
-             console.log('Simulating Lead Conversion for Lead:', data.leadId);
-             try {
-                // Update Lead to associate with the (potentially new) Account if possible, 
-                // or just mark it as handled. 
-                // Note: Updating specific ConvertedAccountId fields on Lead is read-only usually. 
-                // We will just update status.
-                await updateRecord('Lead', data.leadId, { 
-                    Status: 'Working - Contacted', // Or 'Closed - Converted' if allowed without API call
-                    Description: `Form Completed. Linked to Account: ${accountId}`
-                });
-             } catch (e) {
-                 console.warn('Failed to update Lead status:', e.message);
-             }
-        }
-
-        // 3. Contact Logic
         let contactId;
-        if (data.contactName || (data.contactFirstName)) { // Support both formats
-             const lastName = data.contactName ? data.contactName.split(' ').slice(1).join(' ') || data.contactName : data.contactLastName;
-             const firstName = data.contactName ? data.contactName.split(' ')[0] : data.contactFirstName;
+        let opportunityId;
+        let stageName = (data.sites && data.sites.length > 0) ? 'Qualification' : 'Prospecting';
 
-            // Check for existing contact to avoid duplicates
-            const email = data.email || data.contactEmail;
-            let existingContacts = { totalSize: 0 };
-            if (email) {
-                 existingContacts = await query(`SELECT Id FROM Contact WHERE Email = '${email}' LIMIT 1`);
-            }
-
-            if (existingContacts.totalSize > 0) {
-                contactId = existingContacts.records[0].Id;
-                console.log('Found existing contact:', contactId);
-                // Optionally update contact details
-            } else {
-                const contactData = {
-                    AccountId: accountId,
-                    FirstName: firstName,
-                    LastName: lastName || 'Unknown',
-                    Email: email,
-                    Phone: data.phone || data.contactPhone,
-                    MobilePhone: data.phone || data.contactPhone,
-                    Title: data.jobTitle
-                };
-                
-                const contactResult = await createRecord('Contact', contactData);
-                if (contactResult.success) {
-                    contactId = contactResult.id;
-                    console.log('Created contact:', contactId);
-                }
-            }
-        }
-
-        // 4. Opportunity Logic
-        // Determine Stage: If CSV uploaded (sites > 0) -> 'Qualification', else 'Prospecting'
-        const hasSites = data.sites && data.sites.length > 0;
-        const stageName = hasSites ? 'Qualification' : 'Prospecting';
-
-        const opportunityData = {
-            Name: `${data.companyName} - ${data.useCase || 'Energy'} Opportunity`,
-            AccountId: accountId,
-            StageName: stageName,
-            Amount: data.totalAmount || undefined, // Estimate
-            CloseDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            Description: `Generated from Web Form.\nUse Case: ${data.useCase}\nTimeline: ${data.timeline}\nBudget: ${data.budget}\n` +
-                         `Portfolio Size: ${data.portfolioSize}\n`
+        // Helper to get converted status
+        const getConvertedStatus = async () => {
+            const statusResult = await query("SELECT MasterLabel FROM LeadStatus WHERE IsConverted=true LIMIT 1");
+            return statusResult.records[0]?.MasterLabel || 'Closed - Converted';
         };
 
-        if (contactId) {
-            opportunityData.ContactId = contactId; // Primary Contact Role implicit
+        // 1. LEAD CONVERSION FLOW
+        if (data.leadId) {
+            console.log('🔄 Starting Standard Lead Conversion for:', data.leadId);
+
+            // A. Update Lead first with latest form data to ensure mapping is accurate
+            try {
+                await updateRecord('Lead', data.leadId, {
+                    Company: data.companyName,
+                    FirstName: data.contactName ? data.contactName.split(' ')[0] : (data.contactFirstName || undefined),
+                    LastName: data.contactName ? data.contactName.split(' ').slice(1).join(' ') : (data.contactLastName || undefined),
+                    Email: data.email || data.contactEmail,
+                    Phone: data.phone || data.contactPhone,
+                    Title: data.jobTitle,
+                    Website: data.website,
+                    NumberOfEmployees: data.companySize ? parseInt(data.companySize.split('-')[0]) : undefined,
+                    Industry: data.industry,
+                    Description: `Updated from Form before conversion.\nUse Case: ${data.useCase}\nBudget: ${data.budget}`
+                });
+                console.log('   Updated Lead with latest details.');
+            } catch (e) {
+                console.warn('   Could not update Lead before conversion (might be already converted?):', e.message);
+            }
+
+            // B. Perform Conversion
+            const convertedStatus = await getConvertedStatus();
+            const conversionPayload = {
+                allOrNone: true,
+                records: [{
+                    attributes: { type: 'LeadConvert' },
+                    leadId: data.leadId,
+                    convertedStatus: convertedStatus,
+                    doNotCreateOpportunity: false,
+                    opportunityName: `${data.companyName} - ${data.useCase || 'Energy'} Opportunity`
+                }]
+            };
+
+            const session = await authenticate();
+            const conversionResponse = await fetch(`${session.instanceUrl}/services/data/v59.0/composite/sobjects`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session.accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(conversionPayload)
+            });
+
+            const conversionResult = await conversionResponse.json();
+
+            if (!conversionResponse.ok || (Array.isArray(conversionResult) && !conversionResult[0].success)) {
+                // If conversion fails (e.g., already converted), fall back to manual find/create
+                console.warn('⚠️ Conversion failed:', JSON.stringify(conversionResult));
+                console.log('   Falling back to manual Account/Opportunity lookup/creation...');
+                // Fallthrough to manual logic below, but first check if it was already converted
+                // If specific error "Lead already converted", we might need to query the existing ConvertedAccount
+            } else {
+                const result = conversionResult[0];
+                accountId = result.accountId;
+                contactId = result.contactId;
+                opportunityId = result.opportunityId;
+                console.log('✅ Lead Converted Successfully!');
+                console.log('   Account:', accountId, 'Contact:', contactId, 'Opp:', opportunityId);
+            }
         }
 
-        const opportunityResult = await createRecord('Opportunity', opportunityData);
-        if (!opportunityResult.success) {
-            throw new Error('Failed to create Opportunity: ' + JSON.stringify(opportunityResult.errors));
+        // 2. FALLBACK / MANUAL FLOW (If no leadId OR Conversion Failed)
+        if (!accountId) {
+             // ... [Existing manual logic for Account/Contact creation] ...
+             // Update Account Logic
+            const existingAccountsQuery = `SELECT Id FROM Account WHERE Name = '${data.companyName.replace(/'/g, "\\'")}' LIMIT 1`;
+            const existingAccounts = await query(existingAccountsQuery);
+
+            const accountFields = {
+                Industry: data.industry ? data.industry.charAt(0).toUpperCase() + data.industry.slice(1) : undefined,
+                NumberOfEmployees: data.companySize ? parseInt(data.companySize.split('-')[0]) || undefined : undefined,
+                Website: data.website,
+                Description: `Created/Updated from Web Form on ${new Date().toISOString()}`
+            };
+
+            if (existingAccounts.totalSize > 0) {
+                accountId = existingAccounts.records[0].Id;
+                await updateRecord('Account', accountId, accountFields);
+            } else {
+                const accountResult = await createRecord('Account', {
+                    Name: data.companyName,
+                    Type: 'Prospect',
+                    ...accountFields
+                });
+                if (!accountResult.success) throw new Error('Failed to create Account: ' + JSON.stringify(accountResult.errors));
+                accountId = accountResult.id;
+            }
+            
+            // Contact Logic (Manual)
+            if (!contactId && (data.contactName || data.contactEmail)) {
+                 // ... [Reuse existing Contact logic] ...
+                 const email = data.email || data.contactEmail;
+                 const existingContacts = email ? await query(`SELECT Id FROM Contact WHERE Email = '${email}' LIMIT 1`) : { totalSize: 0 };
+                 
+                 if (existingContacts.totalSize > 0) {
+                     contactId = existingContacts.records[0].Id;
+                 } else {
+                     const contactResult = await createRecord('Contact', {
+                         AccountId: accountId,
+                         FirstName: data.contactName ? data.contactName.split(' ')[0] : data.contactFirstName,
+                         LastName: (data.contactName ? data.contactName.split(' ').slice(1).join(' ') : data.contactLastName) || 'Unknown',
+                         Email: email,
+                         Phone: data.phone || data.contactPhone,
+                         Title: data.jobTitle
+                     });
+                     if (contactResult.success) contactId = contactResult.id;
+                 }
+            }
         }
-        console.log('Created opportunity:', opportunityResult.id);
 
+        // 3. POST-CONVERSION / UPDATES
+        // Even if converted, we might need to update the Opportunity or Account with extra fields that didn't map
+        
+        // Update Account with any extra form data that might not have mapped
+        if (accountId) {
+             await updateRecord('Account', accountId, {
+                 Industry: data.industry,
+                 NumberOfEmployees: data.companySize ? parseInt(data.companySize.split('-')[0]) : undefined
+             });
+        }
 
-        // 5. Sites / Service Points Logic
+        // Handle Opportunity (Create if manual, Update if converted)
+        const opportunityFields = {
+            StageName: stageName,
+            Amount: data.totalAmount || undefined,
+            CloseDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            Description: `Generated from Web Form.\nUse Case: ${data.useCase}\nTimeline: ${data.timeline}\nBudget: ${data.budget}\nPortfolio Size: ${data.portfolioSize}\n`
+        };
+
+        if (opportunityId) {
+            // Update existing converted opportunity
+            console.log('Updating converted opportunity:', opportunityId);
+            await updateRecord('Opportunity', opportunityId, opportunityFields);
+        } else {
+            // Create new if manual flow
+            console.log('Creating new opportunity...');
+            const oppResult = await createRecord('Opportunity', {
+                Name: `${data.companyName} - ${data.useCase || 'Energy'} Opportunity`,
+                AccountId: accountId,
+                ContactId: contactId,
+                ...opportunityFields
+            });
+            if (oppResult.success) opportunityId = oppResult.id;
+        }
+
+        // 4. SITES AND SERVICE POINTS (Common Logic)
         const createdPremises = [];
         const createdServicePoints = [];
 
-        if (hasSites) {
+        if (data.sites && data.sites.length > 0) {
             console.log(`Processing ${data.sites.length} sites...`);
             for (const site of data.sites) {
-                // Create Premises
                 const premisesResult = await createRecord('vlocity_cmt__Premises__c', {
                     Name: site.name || 'Site',
                     vlocity_cmt__StreetAddress__c: site.address || undefined,
@@ -499,36 +540,28 @@ app.post('/api/salesforce/invoice', async (req, res) => {
                     const premisesId = premisesResult.id;
                     createdPremises.push({ id: premisesId, name: site.name });
 
-                    // Create Service Points for this Site
                     if (site.meterPoints && site.meterPoints.length > 0) {
                         for (const meterPoint of site.meterPoints) {
                             const servicePointResult = await createRecord('gtx_sales__Service_Point__c', {
                                 gtx_sales__Market_Identifier__c: meterPoint.mpan || undefined,
                                 gtx_sales__Service_External_Id__c: meterPoint.meterNumber || undefined,
-                                gtx_sales__Service_Type__c: 'Electricity', // Default or derive
-                                gtx_sales__Opportunity__c: opportunityResult.id, // Link to Opp
+                                gtx_sales__Service_Type__c: 'Electricity',
+                                gtx_sales__Opportunity__c: opportunityId,
                                 vlocity_cmt__PremisesId__c: premisesId,
                                 gtx_sales__Annual_Consumption__c: data.totalConsumption || undefined
                             });
-
                             if (servicePointResult.success) {
-                                createdServicePoints.push({
-                                    id: servicePointResult.id,
-                                    mpan: meterPoint.mpan
-                                });
+                                createdServicePoints.push({ id: servicePointResult.id, mpan: meterPoint.mpan });
                             }
                         }
-                    } else {
-                         // Create at least one SP if none explicit? 
-                         // For now, only if meter points exist (CSV flow)
                     }
                 }
             }
         }
         
-        // 6. Handle Invoice File Upload if present
-         let fileId;
-        if (data.fileContent && data.fileName) {
+        // 5. FILE UPLOAD
+        let fileId;
+        if (data.fileContent && data.fileName && accountId) {
             const contentVersionResult = await createRecord('ContentVersion', {
                 Title: data.fileName,
                 PathOnClient: data.fileName,
@@ -538,15 +571,14 @@ app.post('/api/salesforce/invoice', async (req, res) => {
             if (contentVersionResult.success) fileId = contentVersionResult.id;
         }
 
-
         // Response
         res.json({
             success: true,
-            message: 'Application processed successfully',
+            message: 'Application processed successfully via Lead Conversion',
             records: {
                 accountId,
                 contactId,
-                opportunityId: opportunityResult.id,
+                opportunityId,
                 stage: stageName,
                 sitesCreated: createdPremises.length,
                 servicePointsCreated: createdServicePoints.length

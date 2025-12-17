@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 
@@ -25,7 +25,7 @@ const HomePage: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
+    <HashRouter>
       <ScrollToTop />
       <div className="relative min-h-screen text-primary font-sans selection:bg-white/20">
         
@@ -50,7 +50,7 @@ const App: React.FC = () => {
         </div>
         <ScrollToHashElement />
       </div>
-    </BrowserRouter>
+    </HashRouter>
   );
 };
 

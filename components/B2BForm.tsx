@@ -814,11 +814,10 @@ export const B2BForm: React.FC = () => {
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 transition-colors"
                   >
                     <option value="">Select portfolio size</option>
-                    <option value="1-10">1-10 Service Points</option>
-                    <option value="11-50">11-50 Service Points</option>
-                    <option value="51-100">51-100 Service Points</option>
-                    <option value="101-500">101-500 Service Points</option>
-                    <option value="500+">500+ Service Points</option>
+                    <option value="1-10000">1 - 10,000 Service Points</option>
+                    <option value="10000-100000">10,000 - 100,000 Service Points</option>
+                    <option value="100000-1000000">100,000 - 1,000,000 Service Points</option>
+                    <option value="1000000+">1,000,000+ Service Points</option>
                   </select>
                 </div>
 

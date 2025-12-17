@@ -399,41 +399,58 @@ app.post('/api/salesforce/invoice', async (req, res) => {
 
             // B. Perform Conversion
             const convertedStatus = await getConvertedStatus();
-            const conversionPayload = {
-                allOrNone: true,
-                records: [{
-                    attributes: { type: 'LeadConvert' },
-                    leadId: data.leadId,
-                    convertedStatus: convertedStatus,
-                    doNotCreateOpportunity: false,
-                    opportunityName: `${data.companyName} - ${data.useCase || 'Energy'} Opportunity`
-                }]
-            };
+            // B. Perform Conversion via SOAP API (since REST LeadConvert is not standard)
+            const convertedStatus = await getConvertedStatus();
+            
+            const soapXml = `
+            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:enterprise.soap.sforce.com">
+               <soapenv:Header>
+                  <urn:SessionHeader>
+                     <urn:sessionId>${session.accessToken}</urn:sessionId>
+                  </urn:SessionHeader>
+                  <urn:DuplicateRuleHeader>
+                     <urn:allowSave>true</urn:allowSave>
+                  </urn:DuplicateRuleHeader>
+               </soapenv:Header>
+               <soapenv:Body>
+                  <urn:convertLead>
+                     <urn:leadConverts>
+                        <urn:convertedStatus>${convertedStatus}</urn:convertedStatus>
+                        <urn:leadId>${data.leadId}</urn:leadId>
+                        <urn:doNotCreateOpportunity>false</urn:doNotCreateOpportunity>
+                        <urn:opportunityName>${data.companyName} - ${data.useCase || 'Energy'} Opportunity</urn:opportunityName>
+                     </urn:leadConverts>
+                  </urn:convertLead>
+               </soapenv:Body>
+            </soapenv:Envelope>
+            `;
 
-            const session = await authenticate();
-            const conversionResponse = await fetch(`${session.instanceUrl}/services/data/v59.0/composite/sobjects`, {
+            console.log('   Sending SOAP convertLead request...');
+            const conversionResponse = await fetch(`${session.instanceUrl}/services/Soap/c/59.0`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${session.accessToken}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'text/xml',
+                    'SOAPAction': '""'
                 },
-                body: JSON.stringify(conversionPayload)
+                body: soapXml
             });
 
-            const conversionResult = await conversionResponse.json();
+            const responseText = await conversionResponse.text();
 
-            if (!conversionResponse.ok || (Array.isArray(conversionResult) && !conversionResult[0].success)) {
-                // If conversion fails (e.g., already converted), fall back to manual find/create
-                console.warn('⚠️ Conversion failed:', JSON.stringify(conversionResult));
-                console.log('   Falling back to manual Account/Opportunity lookup/creation...');
-                // Fallthrough to manual logic below, but first check if it was already converted
-                // If specific error "Lead already converted", we might need to query the existing ConvertedAccount
+            if (!conversionResponse.ok || responseText.includes('success>false<')) {
+                console.error('⚠️ Conversion failed:', responseText);
+                throw new Error('Lead Conversion Failed. SOAP Response: ' + responseText);
             } else {
-                const result = conversionResult[0];
-                accountId = result.accountId;
-                contactId = result.contactId;
-                opportunityId = result.opportunityId;
-                console.log('✅ Lead Converted Successfully!');
+                // Parse IDs from XML using simple Regex
+                const accountMatch = responseText.match(/<accountId>(.*?)<\/accountId>/);
+                const contactMatch = responseText.match(/<contactId>(.*?)<\/contactId>/);
+                const opportunityMatch = responseText.match(/<opportunityId>(.*?)<\/opportunityId>/);
+                
+                accountId = accountMatch ? accountMatch[1] : null;
+                contactId = contactMatch ? contactMatch[1] : null;
+                opportunityId = opportunityMatch ? opportunityMatch[1] : null;
+
+                console.log('✅ Lead Converted Successfully via SOAP!');
                 console.log('   Account:', accountId, 'Contact:', contactId, 'Opp:', opportunityId);
             }
         }

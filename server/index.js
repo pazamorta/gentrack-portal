@@ -585,6 +585,7 @@ app.post('/api/salesforce/invoice', async (req, res) => {
                         for (const meterPoint of site.meterPoints) {
                             const servicePointResult = await createRecord('GTCX_Service_Point__c', {
                                 Name: meterPoint.meterNumber || 'Service Point',
+                                GTCX_Service_Type__c: meterPoint.fuelType || 'Electricity',
                                 GTCX_Fuel_Type__c: meterPoint.fuelType || 'Electricity',
                                 GTCX_Postcode__c: meterPoint.postcode || undefined,
                                 GTCX_Opportunity__c: opportunityId,
@@ -730,18 +731,29 @@ app.post('/api/ai/generate', async (req, res) => {
         const result = await genAI.models.generateContent(generateOptions);
         
         // Extract text safely
+        // Extract text safely
         let text = "";
         try {
-            text = result.text ? result.text() : "";
+            if (result.text && typeof result.text === 'function') {
+                text = result.text();
+            }
         } catch (e) {
-            // TTS models might not return text in the standard way, ignore error
+            console.warn("result.text() failed, trying candidates fallback");
+        }
+
+        // Fallback: Extract from candidates if text is empty
+        if (!text && result.candidates && result.candidates.length > 0) {
+            const firstCandidate = result.candidates[0];
+            if (firstCandidate.content && firstCandidate.content.parts && firstCandidate.content.parts.length > 0) {
+               text = firstCandidate.content.parts.map(p => p.text).join('');
+            }
         }
 
         // Return full candidates to support Audio/Binary extraction on frontend
         // We serialize the response to JSON
         res.json({ 
             text,
-            candidates: result.response.candidates 
+            candidates: result.candidates 
         });
 
     } catch (error) {

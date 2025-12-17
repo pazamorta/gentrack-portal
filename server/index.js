@@ -585,7 +585,6 @@ app.post('/api/salesforce/invoice', async (req, res) => {
                         for (const meterPoint of site.meterPoints) {
                             const servicePointResult = await createRecord('GTCX_Service_Point__c', {
                                 Name: meterPoint.meterNumber || 'Service Point',
-                                GTCX_Service_Type__c: meterPoint.fuelType || 'Electricity',
                                 GTCX_Fuel_Type__c: meterPoint.fuelType || 'Electricity',
                                 GTCX_Postcode__c: meterPoint.postcode || undefined,
                                 GTCX_Opportunity__c: opportunityId,

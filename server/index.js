@@ -67,9 +67,13 @@ async function authenticate() {
 
             if (response.ok) {
                 const data = await response.json();
+                const identityUrl = data.id; // e.g., https://login.salesforce.com/id/00D.../005...
+                const userId = identityUrl ? identityUrl.split('/').pop() : null;
+
                 salesforceSession = {
                     accessToken: data.access_token,
                     instanceUrl: data.instance_url,
+                    userId: userId,
                     expiresAt: Date.now() + 90 * 60 * 1000, // 90 minutes
                 };
                 console.log('✅ Authenticated with Salesforce (Refresh Token)');
@@ -434,6 +438,7 @@ app.post('/api/salesforce/invoice', async (req, res) => {
                      <urn:leadConverts>
                         <urn:convertedStatus>${convertedStatus}</urn:convertedStatus>
                         <urn:leadId>${data.leadId}</urn:leadId>
+                        <urn:ownerId>${session.userId}</urn:ownerId>
                         <urn:doNotCreateOpportunity>false</urn:doNotCreateOpportunity>
                         <urn:opportunityName>${data.companyName} - ${data.useCase || 'Energy'} Opportunity</urn:opportunityName>
                      </urn:leadConverts>

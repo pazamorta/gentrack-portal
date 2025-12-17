@@ -69,7 +69,16 @@ export interface ParsedInvoiceData {
 export interface SuccessResponse {
     success: boolean;
     message: string;
-    createdRecords: {
+    records?: {
+        instanceUrl: string;
+        accountId: string;
+        contactId: string;
+        opportunityId: string;
+        stage?: string;
+        sitesCreated?: number;
+        servicePointsCreated?: number;
+    };
+    createdRecords?: {
         account: SalesforceAccount;
         contact?: Contact;
         opportunity: Opportunity;

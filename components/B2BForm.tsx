@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from './Button';
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, CheckCircle, Building2, Users, ExternalLink } from 'lucide-react';
 import { InvoiceUploader } from './InvoiceUploader';
 import { salesforceService, ParsedInvoiceData } from '../services/salesforce';
 

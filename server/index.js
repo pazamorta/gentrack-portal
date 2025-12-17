@@ -129,6 +129,7 @@ async function salesforceRequest(endpoint, options = {}) {
     const headers = {
         'Authorization': `Bearer ${session.accessToken}`,
         'Content-Type': 'application/json',
+        'Sforce-Duplicate-Rule-Header': 'allowSave=true',
         ...options.headers,
     };
 

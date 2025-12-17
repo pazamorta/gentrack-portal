@@ -19,6 +19,7 @@ const getTabs = (): FeatureTab[] => [
       'Balance generation, grid constraints, and customer demand with AI-driven optimisation across your electricity portfolio.',
     cta: 'Optimise Electricity',
     image: `${import.meta.env.BASE_URL}Platform.gif`,
+    video: `${import.meta.env.BASE_URL}Wind.mp4`,
   },
   {
     id: 'gas',

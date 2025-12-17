@@ -29,9 +29,12 @@ export const PlatformPage: React.FC = () => {
           {/* GIF Section - Left */}
           <div className="order-1 lg:order-1">
             <div className="relative w-full rounded-3xl overflow-hidden border border-white/10 bg-surface/50 backdrop-blur-xl shadow-2xl">
-              <img
-                src={`${import.meta.env.BASE_URL}Platform.gif`}
-                alt="Platform visualization"
+              <video
+                src={`${import.meta.env.BASE_URL}Wind.mp4`}
+                autoPlay
+                loop
+                muted
+                playsInline
                 className="w-full h-auto"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent pointer-events-none"></div>

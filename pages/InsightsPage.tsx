@@ -29,9 +29,12 @@ export const InsightsPage: React.FC = () => {
           {/* GIF Section */}
           <div className="order-2 lg:order-1">
             <div className="relative w-full rounded-3xl overflow-hidden border border-white/10 bg-surface/50 backdrop-blur-xl shadow-2xl">
-              <img
-                src={`${import.meta.env.BASE_URL}Insights.gif`}
-                alt="Insights visualization"
+              <video
+                src={`${import.meta.env.BASE_URL}Earth.mp4`}
+                autoPlay
+                loop
+                muted
+                playsInline
                 className="w-full h-auto"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent pointer-events-none"></div>

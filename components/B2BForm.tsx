@@ -65,8 +65,9 @@ export const B2BForm: React.FC = () => {
   const validateStep = (step: Step): boolean => {
     switch (step) {
       case 1:
+        const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
         if (formData.userType === 'tpi' && !formData.tpiIdentifier) return false;
-        return !!(formData.gdprConsent && formData.companyName && formData.companyNumber && formData.contactName && formData.email && formData.phone && formData.jobTitle);
+        return !!(formData.gdprConsent && formData.companyName && formData.companyNumber && formData.contactName && formData.email && emailValid && formData.phone && formData.jobTitle);
       case 2:
         return !!(formData.industry && formData.companySize);
       case 3:

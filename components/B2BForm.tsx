@@ -495,6 +495,21 @@ export const B2BForm: React.FC = () => {
                   </div>
                 </div>
 
+                <div className="mt-4 p-4 bg-white/5 border border-white/10 rounded-xl">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={formData.gdprConsent}
+                            onChange={(e) => setFormData(prev => ({ ...prev, gdprConsent: e.target.checked }))}
+                            className="mt-1 w-5 h-5 rounded border-white/20 bg-white/5 text-[#00E599] focus:ring-2 focus:ring-[#00E599]/50 focus:ring-offset-2 focus:ring-offset-transparent cursor-pointer"
+                        />
+                        <span className="text-sm text-gray-300">
+                            I consent to the processing of my personal data in accordance with the Privacy Policy and GDPR regulations. *
+                        </span>
+                    </label>
+                </div>
+
+
               </div>
               )}
             </div>

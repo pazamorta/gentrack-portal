@@ -542,7 +542,7 @@ app.post('/api/salesforce/invoice', async (req, res) => {
         // Handle Opportunity (Create if manual, Update if converted)
         const opportunityFields = {
             StageName: stageName,
-            Amount: data.totalAmount || undefined,
+            Amount: (data.totalConsumption ? data.totalConsumption * 100 : undefined) || data.totalAmount || undefined,
             CloseDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             Description: `Generated from Web Form.\nUse Case: ${data.useCase}\nTimeline: ${data.timeline}\nBudget: ${data.budget}\nPortfolio Size: ${data.portfolioSize}\n`
         };
@@ -608,38 +608,61 @@ app.post('/api/salesforce/invoice', async (req, res) => {
         
         // 5. FILE UPLOAD
         let fileId;
+        console.log('--- FILE UPLOAD SECTION ---');
+        console.log('Has File Content:', !!data.fileContent);
+        console.log('Has File Name:', !!data.fileName);
+        console.log('Has Account ID:', !!accountId);
+        
+        if (data.fileContent) {
+            console.log('File Content Length:', data.fileContent.length);
+        }
+
         if (data.fileContent && data.fileName && accountId) {
-            console.log('Uploading file to Salesforce...');
+            console.log('Attempting to upload file to Salesforce...');
             
             // 1. Create ContentVersion (Linked to Account via FirstPublishLocationId)
-            const contentVersionResult = await createRecord('ContentVersion', {
-                Title: data.fileName,
-                PathOnClient: data.fileName,
-                VersionData: data.fileContent,
-                FirstPublishLocationId: accountId 
-            });
+            try {
+                const contentVersionResult = await createRecord('ContentVersion', {
+                    Title: data.fileName,
+                    PathOnClient: data.fileName,
+                    VersionData: data.fileContent,
+                    FirstPublishLocationId: accountId 
+                });
+                console.log('ContentVersion Create Result:', JSON.stringify(contentVersionResult));
 
-            if (contentVersionResult.success) {
-                const contentVersionId = contentVersionResult.id;
-                console.log('File uploaded. ID:', contentVersionId);
+                if (contentVersionResult.success) {
+                    const contentVersionId = contentVersionResult.id;
+                    console.log('File uploaded successfully. ID:', contentVersionId);
 
-                // 2. Query ContentDocumentId
-                const cvQuery = await query(`SELECT ContentDocumentId FROM ContentVersion WHERE Id = '${contentVersionId}'`);
-                
-                if (cvQuery.totalSize > 0) {
-                    const contentDocumentId = cvQuery.records[0].ContentDocumentId;
+                    // 2. Query ContentDocumentId
+                    const cvQuery = await query(`SELECT ContentDocumentId FROM ContentVersion WHERE Id = '${contentVersionId}'`);
+                    console.log('ContentDocument Query Result:', JSON.stringify(cvQuery));
                     
-                    // 3. Link to Opportunity
-                    if (opportunityId) {
-                        await createRecord('ContentDocumentLink', {
-                            ContentDocumentId: contentDocumentId,
-                            LinkedEntityId: opportunityId,
-                            ShareType: 'V'
-                        });
-                        console.log('Linked file to Opportunity:', opportunityId);
+                    if (cvQuery.totalSize > 0) {
+                        const contentDocumentId = cvQuery.records[0].ContentDocumentId;
+                        console.log('Found ContentDocumentId:', contentDocumentId);
+                        
+                        // 3. Link to Opportunity
+                        if (opportunityId) {
+                            console.log('Linking to Opportunity:', opportunityId);
+                            const linkResult = await createRecord('ContentDocumentLink', {
+                                ContentDocumentId: contentDocumentId,
+                                LinkedEntityId: opportunityId,
+                                ShareType: 'V'
+                            });
+                            console.log('Opportunity Link Result:', JSON.stringify(linkResult));
+                        }
+                    } else {
+                        console.warn('Could not find ContentDocumentId for uploaded version.');
                     }
+                } else {
+                    console.error('Failed to create ContentVersion:', contentVersionResult.errors);
                 }
+            } catch (fileError) {
+                console.error('EXCEPTION during file upload:', fileError);
             }
+        } else {
+            console.warn('SKIPPING FILE UPLOAD: Missing file content, filename, or account ID.');
         }
 
         // Response

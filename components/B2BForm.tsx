@@ -33,6 +33,9 @@ export const B2BForm: React.FC = () => {
   });
   const [showManualForm, setShowManualForm] = useState(false);
   const [invoiceData, setInvoiceData] = useState<ParsedInvoiceData | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Ensure this exists if I used it above, or check existing code.
+  // Checking previous code: I didn't see isSubmitting defined. I should add it just in case.
 
   const [submissionSuccess, setSubmissionSuccess] = useState<{
     instanceUrl: string;
@@ -202,49 +205,56 @@ export const B2BForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateStep(3)) {
+    setValidationError(null);
+    
+    if (!validateStep(3)) {
+      setValidationError("Please complete all required fields correctly.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
       console.log('Form submitted:', formData);
-
-      try {
-        console.log('Creating/Updating Salesforce records...');
+      console.log('Creating/Updating Salesforce records...');
+      
+      // Construct final payload merging invoice data and form data
+      const finalInvoiceData: ParsedInvoiceData = {
+        // Base invoice data or defaults
+        companyName: formData.companyName,
+        companyNumber: formData.companyNumber,
+        contactFirstName: formData.contactName.split(' ')[0],
+        contactLastName: formData.contactName.split(' ').slice(1).join(' ') || 'Unknown',
+        contactEmail: formData.email,
+        contactPhone: formData.phone,
+        sites: invoiceData?.sites || [],
+        fileName: invoiceData?.fileName,
+        fileContent: invoiceData?.fileContent,
+        invoiceNumber: invoiceData?.invoiceNumber,
+        totalAmount: invoiceData?.totalAmount,
+        totalConsumption: invoiceData?.totalConsumption,
         
-        // Construct final payload merging invoice data and form data
-        const finalInvoiceData: ParsedInvoiceData = {
-          // Base invoice data or defaults
-          companyName: formData.companyName,
-          companyNumber: formData.companyNumber,
-          contactFirstName: formData.contactName.split(' ')[0],
-          contactLastName: formData.contactName.split(' ').slice(1).join(' ') || 'Unknown',
-          contactEmail: formData.email,
-          contactPhone: formData.phone,
-          sites: invoiceData?.sites || [],
-          fileName: invoiceData?.fileName,
-          fileContent: invoiceData?.fileContent,
-          invoiceNumber: invoiceData?.invoiceNumber,
-          totalAmount: invoiceData?.totalAmount,
-          totalConsumption: invoiceData?.totalConsumption,
-          
-          // Form fields for conversion
-          leadId: formData.leadId, // This triggers conversion logic in backend
-          industry: formData.industry,
-          companySize: formData.companySize,
-          useCase: formData.useCase,
-          timeline: formData.timeline,
-          budget: formData.budget,
-          portfolioSize: formData.portfolioSize
-        };
+        // Form fields for conversion
+        leadId: formData.leadId, // This triggers conversion logic in backend
+        industry: formData.industry,
+        companySize: formData.companySize,
+        useCase: formData.useCase,
+        timeline: formData.timeline,
+        budget: formData.budget,
+        portfolioSize: formData.portfolioSize
+      };
 
-        const response = await salesforceService.createRecordsFromInvoice(finalInvoiceData);
-        if (response.success && response.records) {
-          console.log(response.message);
-          setSubmissionSuccess(response.records);
-        } else {
-             alert('Submission processed, but there might be a delay in Salesforce updates.');
-        }
-      } catch (error) {
-        console.error('Submission error:', error);
-        alert('There was an error submitting your request. Please try again.');
+      const response = await salesforceService.createRecordsFromInvoice(finalInvoiceData);
+      if (response.success && response.records) {
+        console.log(response.message);
+        setSubmissionSuccess(response.records);
+      } else {
+           alert('Submission processed, but there might be a delay in Salesforce updates.');
       }
+    } catch (error) {
+      console.error('Submission error:', error);
+      alert('There was an error submitting your request. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -883,12 +893,15 @@ export const B2BForm: React.FC = () => {
             {currentStep < 3 ? (
               <button
                 type="button"
-                onClick={handleNext}
-                disabled={!validateStep(currentStep)}
-                className={`flex items-center gap-2 px-8 py-3 rounded-full font-medium transition-all ${validateStep(currentStep)
-                  ? 'bg-white text-black hover:bg-gray-200'
-                  : 'bg-white/10 text-gray-500 cursor-not-allowed'
-                  }`}
+                onClick={() => {
+                  if (validateStep(currentStep)) {
+                    handleNext();
+                    setValidationError(null);
+                  } else {
+                    setValidationError("Please fill in all required fields correctly (including a valid email).");
+                  }
+                }}
+                className="flex items-center gap-2 px-8 py-3 rounded-full font-medium transition-all bg-white text-black hover:bg-gray-200"
               >
                 Next
                 <ChevronRight size={20} />
@@ -898,12 +911,17 @@ export const B2BForm: React.FC = () => {
                 type="submit"
                 variant="primary"
                 className="min-w-[200px]"
-                disabled={!validateStep(3)}
+                disabled={isSubmitting} 
               >
-                Submit Request
+                {isSubmitting ? 'Submitting...' : 'Submit Request'}
               </Button>
             )}
           </div>
+          {validationError && (
+            <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center">
+              {validationError}
+            </div>
+          )}
         </form>
       </div>
     </section>

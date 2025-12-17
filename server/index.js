@@ -400,7 +400,7 @@ app.post('/api/salesforce/invoice', async (req, res) => {
             // B. Perform Conversion
             const convertedStatus = await getConvertedStatus();
             // B. Perform Conversion via SOAP API (since REST LeadConvert is not standard)
-            const convertedStatus = await getConvertedStatus();
+            // const convertedStatus = await getConvertedStatus(); // Already declared
             
             const soapXml = `
             <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:enterprise.soap.sforce.com">

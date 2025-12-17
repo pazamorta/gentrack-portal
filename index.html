@@ -9,7 +9,7 @@
       content="Oxygen is a leading UK utilities company in the B2B energy sector."
     />
     <title>Oxygen AI - B2B Energy Optimization</title>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://pazamorta.github.io; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://esm.sh https://esm.run https://unpkg.com https://aistudiocdn.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://r2cdn.perplexity.ai data:; connect-src 'self' http://localhost:3001 https://*.salesforce.com https://login.salesforce.com https://pazamorta.github.io https://generativelanguage.googleapis.com; img-src 'self' data: https:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://pazamorta.github.io; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://esm.sh https://esm.run https://unpkg.com https://aistudiocdn.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://r2cdn.perplexity.ai data:; connect-src 'self' http://localhost:3001 https://*.salesforce.com https://login.salesforce.com https://pazamorta.github.io https://generativelanguage.googleapis.com; img-src 'self' data: https:;">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,7 +55,13 @@
     </script>
     <style>
       html {
-        background-color: #06040A;
+        background-color: #06040A !important;
+      }
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
       }
       body {
         margin: 0;
@@ -70,6 +76,20 @@
       body {
         -ms-overflow-style: none;  /* IE and Edge */
         scrollbar-width: none;  /* Firefox */
+      }
+      #canvas {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 0;
+        pointer-events: none;
+      }
+      #root {
+        position: relative;
+        z-index: 1;
       }
     </style>
   <script type="importmap">
@@ -88,7 +108,56 @@
 <link rel="stylesheet" href="/index.css">
 </head>
   <body>
+    <canvas id="canvas"></canvas>
     <div id="root"></div>
+  <script type="module">
+    import TubesCursor from "https://cdn.jsdelivr.net/npm/threejs-components@0.0.19/build/cursors/tubes1.min.js"
+
+    const canvas = document.getElementById('canvas');
+    if (canvas) {
+      // Ensure canvas has dimensions
+      const resizeCanvas = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      };
+      
+      // Set initial size
+      resizeCanvas();
+      
+      // Handle resize
+      window.addEventListener('resize', resizeCanvas);
+
+      try {
+        const app = TubesCursor(canvas, {
+          tubes: {
+            colors: ["#f967fb", "#53bc28", "#6958d5"],
+            lights: {
+              intensity: 200,
+              colors: ["#83f36e", "#fe8a2e", "#ff008a", "#60aed5"]
+            }
+          }
+        })
+
+        document.body.addEventListener('click', () => {
+          const colors = randomColors(3)
+          const lightsColors = randomColors(4)
+          console.log(colors, lightsColors)
+          if (app && app.tubes) {
+            app.tubes.setColors(colors)
+            app.tubes.setLightsColors(lightsColors)
+          }
+        })
+      } catch (e) {
+        console.error("Failed to initialize TubesCursor:", e);
+      }
+    }
+
+    function randomColors (count) {
+        return new Array(count)
+            .fill(0)
+            .map(() => "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'))
+    }
+  </script>
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>

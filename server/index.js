@@ -631,6 +631,7 @@ app.post('/api/salesforce/invoice', async (req, res) => {
                 console.log('ContentVersion Create Result:', JSON.stringify(contentVersionResult));
 
                 if (contentVersionResult.success) {
+                    fileId = contentVersionResult.id;
                     const contentVersionId = contentVersionResult.id;
                     console.log('File uploaded successfully. ID:', contentVersionId);
 
@@ -675,6 +676,7 @@ app.post('/api/salesforce/invoice', async (req, res) => {
                 accountId,
                 contactId,
                 opportunityId,
+                contentDocumentId: fileId ? (await query(`SELECT ContentDocumentId FROM ContentVersion WHERE Id = '${fileId}'`)).records[0]?.ContentDocumentId : null,
                 stage: stageName,
                 sitesCreated: createdPremises.length,
                 servicePointsCreated: createdServicePoints.length,

@@ -263,22 +263,35 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
       const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
       const data: ParsedInvoiceData = JSON.parse(jsonStr);
 
+      // Add missing file data for upload
+      data.fileContent = base64;
+      data.fileName = file.name;
+
       const consumption = data.totalConsumption || 0;
-      const calculatedPrice = consumption * 0.10; // 10p per MWh
+      const calculatedPrice = consumption * 100; // £100 per MWh
 
       setQuoteDetails({ consumption, price: calculatedPrice });
 
       // Save to Salesforce
       const salesforceResult = await salesforceService.createRecordsFromInvoice(data);
+      const records = salesforceResult.records;
+      const instanceUrl = records?.instanceUrl || 'https://gentrack-4-dev-ed.develop.lightning.force.com';
 
-      const responseMsg = `**✅ Invoice Processed Successfully**\n\n` +
-        `**Company:** ${data.companyName}\n` +
-        `**Invoice Number:** ${data.invoiceNumber || 'N/A'}\n` +
-        `**Total Consumption:** ${consumption.toFixed(2)} MWh\n` +
-        `**Estimated Price:** £${calculatedPrice.toFixed(2)} (at 10p/MWh)\n\n` +
+      const marketRate = 150; // £150/MWh vs our £100/MWh
+      const marketPrice = consumption * marketRate;
+      const savings = marketPrice - calculatedPrice;
+
+      const responseMsg = `Detailed Analysis for **${data.companyName}**:\n\n` +
+        `Based on your annual consumption of **${consumption.toFixed(2)} MWh**, your estimated cost with our specific rate is **£${calculatedPrice.toFixed(2)}** (at £100/MWh).\n\n` +
+        `📉 **Potential Savings:**\n` +
+        `Compared to the standard market rate of ~£${marketRate}/MWh, you could save approximately **£${savings.toFixed(2)} per year** by switching!\n\n` +
+        `Would you like me to generate a formal PDF quote and email it to you?\n\n` +
+        `---\n` +
         `**Salesforce Records Created:**\n` +
-        `${salesforceResult.message}\n\n` +
-        `All details have been saved to Salesforce! 🎉`;
+        (records?.accountId ? `- [View Account](${instanceUrl}/lightning/r/Account/${records.accountId}/view)\n` : '') +
+        (records?.contactId ? `- [View Contact](${instanceUrl}/lightning/r/Contact/${records.contactId}/view)\n` : '') +
+        (records?.opportunityId ? `- [View Opportunity](${instanceUrl}/lightning/r/Opportunity/${records.opportunityId}/view)\n` : '') +
+        (records?.contentDocumentId ? `- [View Bill File](${instanceUrl}/lightning/r/ContentDocument/${records.contentDocumentId}/view)\n` : '');
       
       // Add assistant message to chat history
       const assistantMessage: ChatMessage = {

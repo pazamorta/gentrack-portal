@@ -77,6 +77,7 @@ export interface SuccessResponse {
         stage?: string;
         sitesCreated?: number;
         servicePointsCreated?: number;
+        contentDocumentId?: string;
     };
     createdRecords?: {
         account: SalesforceAccount;

@@ -15,6 +15,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM Sans:opsz,wght@9..40,100..900&family=Inter:wght@100..900&display=swap" rel="stylesheet">
     <script>
+      // SPA Redirect for GitHub Pages to support HashRouter
+      (function() {
+        var path = window.location.pathname;
+        var appBase = '/gentrack-portal/';
+        // Check if we are on a known sub-path that isn't the root
+        if (path.startsWith(appBase) && path !== appBase && path !== appBase + 'index.html') {
+           var newPath = path.substring(appBase.length);
+           if (newPath.startsWith('/')) newPath = newPath.substring(1);
+           // Redirect to absolute equivalent hash path
+           var newUrl = window.location.protocol + '//' + window.location.host + appBase + '#/' + newPath + window.location.search;
+           window.location.replace(newUrl);
+        }
+      })();
+
       // Polyfill for process.env
       window.process = {
         env: {

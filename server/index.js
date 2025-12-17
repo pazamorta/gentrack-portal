@@ -572,10 +572,12 @@ app.post('/api/salesforce/invoice', async (req, res) => {
         }
 
         // Response
+        const session = await authenticate();
         res.json({
             success: true,
             message: 'Application processed successfully via Lead Conversion',
             records: {
+                instanceUrl: session.instanceUrl,
                 accountId,
                 contactId,
                 opportunityId,

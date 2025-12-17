@@ -34,8 +34,16 @@ export const B2BForm: React.FC = () => {
   const [showManualForm, setShowManualForm] = useState(false);
   const [invoiceData, setInvoiceData] = useState<ParsedInvoiceData | null>(null);
 
+  const [submissionSuccess, setSubmissionSuccess] = useState<{
+    instanceUrl: string;
+    accountId: string;
+    contactId: string;
+    opportunityId: string;
+  } | null>(null);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+    // ... existing key logic
     const checked = (e.target as HTMLInputElement).checked;
     
     setFormData(prev => ({ 
@@ -45,151 +53,17 @@ export const B2BForm: React.FC = () => {
   };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      energyDomains: checked
-        ? [...prev.energyDomains, value]
-        : prev.energyDomains.filter(domain => domain !== value)
-    }));
+      // ... existing logic
+      const { value, checked } = e.target;
+      setFormData(prev => ({
+        ...prev,
+        energyDomains: checked
+          ? [...prev.energyDomains, value]
+          : prev.energyDomains.filter(domain => domain !== value)
+      }));
   };
 
-  const validateStep = (step: Step): boolean => {
-    switch (step) {
-      case 1:
-        if (formData.userType === 'tpi' && !formData.tpiIdentifier) return false;
-        return !!(formData.gdprConsent && formData.companyName && formData.companyNumber && formData.contactName && formData.email && formData.phone && formData.jobTitle);
-      case 2:
-        return !!(formData.industry && formData.companySize);
-      case 3:
-        return !!(formData.useCase && formData.portfolioSize);
-      default:
-        return false;
-    }
-  };
-
-  const handleInvoiceParsed = (data: ParsedInvoiceData) => {
-    setInvoiceData(data);
-    setShowManualForm(true);
-    setFormData(prev => ({
-      ...prev,
-      companyName: data.companyName || prev.companyName,
-      companyNumber: data.companyNumber || prev.companyNumber,
-      // We could also map other fields if available in the invoice
-    }));
-  };
-
-  const handleDownloadTemplate = () => {
-    const headers = [
-      'Service Point',
-      'Fuel Type',
-      'Address',
-      'Postcode',
-      'Product Preference*',
-      'Duration Options*',
-      'Annual Consumption*',
-      'Site Name*',
-      'Service Point Contact Name*',
-      'Service Point Contact email*',
-      'Service Point Contact tel*',
-      'Service Point Company Number'
-    ];
-    
-    const csvContent = headers.join(',') + '\n';
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', 'portfolio_template.csv');
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const text = await file.text();
-    const rows = text.split('\n').map(row => row.split(','));
-    const headers = rows[0].map(h => h.trim());
-    
-    // Simple CSV parsing (assuming no commas in values for MVP)
-    const sitesMap = new Map<string, any>();
-    
-    rows.slice(1).forEach(row => {
-      if (row.length < 2) return; // Skip empty rows
-      
-      const getValue = (headerPart: string) => {
-        const index = headers.findIndex(h => h.includes(headerPart));
-        return index >= 0 ? row[index]?.trim() : '';
-      };
-
-      const siteName = getValue('Site Name') || 'Unknown Site';
-      const servicePointId = getValue('Service Point');
-      
-      if (!sitesMap.has(siteName)) {
-        sitesMap.set(siteName, {
-          name: siteName,
-          address: `${getValue('Address')} ${getValue('Postcode')}`.trim(),
-          meterPoints: []
-        });
-      }
-
-      if (servicePointId) {
-        sitesMap.get(siteName).meterPoints.push({
-          mpan: servicePointId,
-          meterNumber: servicePointId,
-          address: `${getValue('Address')} ${getValue('Postcode')}`.trim(),
-        });
-      }
-    });
-
-    const parsedSites = Array.from(sitesMap.values());
-    
-    setInvoiceData(prev => ({
-      ...prev!, // Assumes user might have uploaded invoice or matches other data. If null, we create new.
-      companyName: prev?.companyName || formData.companyName,
-      companyNumber: prev?.companyNumber || formData.companyNumber,
-      // @ts-ignore
-      sites: parsedSites
-    }));
-    
-    alert(`Successfully loaded ${parsedSites.length} sites from spreadsheet.`);
-  };
-
-  const handleNext = async () => {
-    if (validateStep(currentStep) && currentStep < 3) {
-      // Create Lead on Step 1 completion
-      if (currentStep === 1) {
-          try {
-              console.log('Creating Lead...');
-              // Only create if we don't have one? Or update? For MVP, always create new if not present.
-              if (!formData.leadId) {
-                  const res = await salesforceService.createLead(formData);
-                  if (res.success && res.leadId) {
-                      setFormData(prev => ({ ...prev, leadId: res.leadId! }));
-                      console.log('Lead created:', res.leadId);
-                  }
-              }
-          } catch (e) {
-              console.error('Failed to create lead:', e);
-              // We proceed anyway, not blocking user flow
-          }
-      }
-      
-      setCurrentStep((prev) => (prev + 1) as Step);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep((prev) => (prev - 1) as Step);
-    }
-  };
+  // ... [Keep other handlers like validateStep, handleInvoiceParsed, handleDownloadTemplate, handleFileUpload, handleNext, handlePrevious same]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -226,9 +100,9 @@ export const B2BForm: React.FC = () => {
         };
 
         const response = await salesforceService.createRecordsFromInvoice(finalInvoiceData);
-        if (response.success) {
+        if (response.success && response.records) {
           console.log(response.message);
-          alert('Success! Your request has been submitted and Salesforce records have been created.');
+          setSubmissionSuccess(response.records);
         } else {
              alert('Submission processed, but there might be a delay in Salesforce updates.');
         }
@@ -238,6 +112,88 @@ export const B2BForm: React.FC = () => {
       }
     }
   };
+
+  // ... [Keep steps array definition]
+
+  if (submissionSuccess) {
+      return (
+        <div className="w-full max-w-4xl mx-auto p-8 bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 text-center animate-fade-in">
+            <div className="mb-6 flex justify-center">
+                <div className="w-20 h-20 bg-[#00E599]/20 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-10 h-10 text-[#00E599]" />
+                </div>
+            </div>
+            
+            <h2 className="text-3xl font-display font-bold text-white mb-4">Application Submitted!</h2>
+            <p className="text-gray-400 mb-8 max-w-xl mx-auto">
+                Thank you. Your request has been successfully processed. 
+                Your lead has been converted, and the following records have been created in Salesforce.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+                {submissionSuccess.accountId && (
+                    <a 
+                        href={`${submissionSuccess.instanceUrl}/lightning/r/Account/${submissionSuccess.accountId}/view`}
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="p-6 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group"
+                    >
+                        <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4 mx-auto group-hover:bg-blue-500/30 transition-colors">
+                            <Building2 className="w-6 h-6 text-blue-400" />
+                        </div>
+                        <h3 className="text-white font-medium mb-1">Account</h3>
+                        <p className="text-xs text-blue-400 flex items-center justify-center gap-1">
+                            View Record <ExternalLink className="w-3 h-3" />
+                        </p>
+                    </a>
+                )}
+
+                {submissionSuccess.contactId && (
+                    <a 
+                        href={`${submissionSuccess.instanceUrl}/lightning/r/Contact/${submissionSuccess.contactId}/view`}
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="p-6 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group"
+                    >
+                        <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mb-4 mx-auto group-hover:bg-purple-500/30 transition-colors">
+                            <Users className="w-6 h-6 text-purple-400" />
+                        </div>
+                        <h3 className="text-white font-medium mb-1">Contact</h3>
+                        <p className="text-xs text-purple-400 flex items-center justify-center gap-1">
+                            View Record <ExternalLink className="w-3 h-3" />
+                        </p>
+                    </a>
+                )}
+
+                {submissionSuccess.opportunityId && (
+                    <a 
+                        href={`${submissionSuccess.instanceUrl}/lightning/r/Opportunity/${submissionSuccess.opportunityId}/view`}
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="p-6 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group"
+                    >
+                        <div className="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center mb-4 mx-auto group-hover:bg-orange-500/30 transition-colors">
+                            <CheckCircle className="w-6 h-6 text-orange-400" />
+                        </div>
+                        <h3 className="text-white font-medium mb-1">Opportunity</h3>
+                        <p className="text-xs text-orange-400 flex items-center justify-center gap-1">
+                            View Record <ExternalLink className="w-3 h-3" />
+                        </p>
+                    </a>
+                )}
+            </div>
+
+            <div className="mt-12">
+                <button 
+                    onClick={() => window.location.reload()}
+                    className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors border border-white/10"
+                >
+                    Submit Another Application
+                </button>
+            </div>
+        </div>
+      );
+  }
 
   const steps = [
     { number: 1, title: 'Company & Contact', description: 'Basic information' },

@@ -777,11 +777,11 @@ export const B2BForm: React.FC = () => {
                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 transition-colors"
                     >
                       <option value="">Select budget range</option>
-                      <option value="under-50k">Under $50,000</option>
-                      <option value="50k-100k">$50,000 - $100,000</option>
-                      <option value="100k-250k">$100,000 - $250,000</option>
-                      <option value="250k-500k">$250,000 - $500,000</option>
-                      <option value="500k+">$500,000+</option>
+                      <option value="under-50k">Under £50,000</option>
+                      <option value="50k-100k">£50,000 - £100,000</option>
+                      <option value="100k-250k">£100,000 - £250,000</option>
+                      <option value="250k-500k">£250,000 - £500,000</option>
+                      <option value="500k+">£500,000+</option>
                     </select>
                   </div>
                 </div>

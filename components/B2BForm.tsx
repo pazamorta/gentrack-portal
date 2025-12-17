@@ -43,7 +43,7 @@ export const B2BForm: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    // ... existing key logic
+    // Handle checkbox separately
     const checked = (e.target as HTMLInputElement).checked;
     
     setFormData(prev => ({ 
@@ -53,17 +53,151 @@ export const B2BForm: React.FC = () => {
   };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      // ... existing logic
-      const { value, checked } = e.target;
-      setFormData(prev => ({
-        ...prev,
-        energyDomains: checked
-          ? [...prev.energyDomains, value]
-          : prev.energyDomains.filter(domain => domain !== value)
-      }));
+    const { value, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      energyDomains: checked
+        ? [...prev.energyDomains, value]
+        : prev.energyDomains.filter(domain => domain !== value)
+    }));
   };
 
-  // ... [Keep other handlers like validateStep, handleInvoiceParsed, handleDownloadTemplate, handleFileUpload, handleNext, handlePrevious same]
+  const validateStep = (step: Step): boolean => {
+    switch (step) {
+      case 1:
+        if (formData.userType === 'tpi' && !formData.tpiIdentifier) return false;
+        return !!(formData.gdprConsent && formData.companyName && formData.companyNumber && formData.contactName && formData.email && formData.phone && formData.jobTitle);
+      case 2:
+        return !!(formData.industry && formData.companySize);
+      case 3:
+        return !!(formData.useCase && formData.portfolioSize);
+      default:
+        return false;
+    }
+  };
+
+  const handleInvoiceParsed = (data: ParsedInvoiceData) => {
+    setInvoiceData(data);
+    setShowManualForm(true);
+    setFormData(prev => ({
+      ...prev,
+      companyName: data.companyName || prev.companyName,
+      companyNumber: data.companyNumber || prev.companyNumber,
+      // We could also map other fields if available in the invoice
+    }));
+  };
+
+  const handleDownloadTemplate = () => {
+    const headers = [
+      'Service Point',
+      'Fuel Type',
+      'Address',
+      'Postcode',
+      'Product Preference*',
+      'Duration Options*',
+      'Annual Consumption*',
+      'Site Name*',
+      'Service Point Contact Name*',
+      'Service Point Contact email*',
+      'Service Point Contact tel*',
+      'Service Point Company Number'
+    ];
+    
+    const csvContent = headers.join(',') + '\n';
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'portfolio_template.csv');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const text = await file.text();
+    const rows = text.split('\n').map(row => row.split(','));
+    const headers = rows[0].map(h => h.trim());
+    
+    // Simple CSV parsing (assuming no commas in values for MVP)
+    const sitesMap = new Map<string, any>();
+    
+    rows.slice(1).forEach(row => {
+      if (row.length < 2) return; // Skip empty rows
+      
+      const getValue = (headerPart: string) => {
+        const index = headers.findIndex(h => h.includes(headerPart));
+        return index >= 0 ? row[index]?.trim() : '';
+      };
+
+      const siteName = getValue('Site Name') || 'Unknown Site';
+      const servicePointId = getValue('Service Point');
+      
+      if (!sitesMap.has(siteName)) {
+        sitesMap.set(siteName, {
+          name: siteName,
+          address: `${getValue('Address')} ${getValue('Postcode')}`.trim(),
+          meterPoints: []
+        });
+      }
+
+      if (servicePointId) {
+        sitesMap.get(siteName).meterPoints.push({
+          mpan: servicePointId,
+          meterNumber: servicePointId,
+          address: `${getValue('Address')} ${getValue('Postcode')}`.trim(),
+        });
+      }
+    });
+
+    const parsedSites = Array.from(sitesMap.values());
+    
+    setInvoiceData(prev => ({
+      ...prev!, // Assumes user might have uploaded invoice or matches other data. If null, we create new.
+      companyName: prev?.companyName || formData.companyName,
+      companyNumber: prev?.companyNumber || formData.companyNumber,
+      // @ts-ignore
+      sites: parsedSites
+    }));
+    
+    alert(`Successfully loaded ${parsedSites.length} sites from spreadsheet.`);
+  };
+
+  const handleNext = async () => {
+    if (validateStep(currentStep) && currentStep < 3) {
+      // Create Lead on Step 1 completion
+      if (currentStep === 1) {
+          try {
+              console.log('Creating Lead...');
+              // Only create if we don't have one? Or update? For MVP, always create new if not present.
+              if (!formData.leadId) {
+                  const res = await salesforceService.createLead(formData);
+                  if (res.success && res.leadId) {
+                      setFormData(prev => ({ ...prev, leadId: res.leadId! }));
+                      console.log('Lead created:', res.leadId);
+                  }
+              }
+          } catch (e) {
+              console.error('Failed to create lead:', e);
+              // We proceed anyway, not blocking user flow
+          }
+      }
+      
+      setCurrentStep((prev) => (prev + 1) as Step);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      setCurrentStep((prev) => (prev - 1) as Step);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

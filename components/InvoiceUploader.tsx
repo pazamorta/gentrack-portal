@@ -1,13 +1,16 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Loader2, CheckCircle, AlertCircle, FileText } from 'lucide-react';
+import { Upload, Loader2, CheckCircle, AlertCircle, FileText, Check } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { ParsedInvoiceData } from '../services/salesforce';
 
 interface InvoiceUploaderProps {
     onDataParsed: (data: ParsedInvoiceData) => void;
+    gdprConsent: boolean;
+    onGdprChange?: (checked: boolean) => void;
+    onGdprError?: () => void;
 }
 
-export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed }) => {
+export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed, gdprConsent, onGdprChange, onGdprError }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -17,6 +20,12 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed }
     const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
 
     const processFile = async (file: File) => {
+        if (!gdprConsent) {
+            setError("Please accept the GDPR and Privacy Policy before uploading.");
+            onGdprError?.();
+            return;
+        }
+
         if (!apiKey) {
             setError("Gemini API Key is missing.");
             return;
@@ -46,6 +55,11 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed }
           "invoiceNumber": "string",
           "invoiceDate": "YYYY-MM-DD",
           "totalAmount": number,
+          "totalConsumption": number (total energy consumption in MWh, convert if necessary),
+          "contactFirstName": "string (contact person first name if found)",
+          "contactLastName": "string (contact person last name if found)",
+          "contactEmail": "string (contact email if found)",
+          "contactPhone": "string (contact phone if found)",
           "sites": [
             {
               "name": "string (site name or address alias)",
@@ -87,6 +101,10 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed }
             const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
             const data: ParsedInvoiceData = JSON.parse(jsonStr);
+            
+            // Attach file content for upload
+            data.fileContent = base64;
+            data.fileName = file.name;
 
             console.log("Parsed Invoice Data:", data);
             onDataParsed(data);
@@ -149,6 +167,27 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed }
                 />
 
                 <div className="flex flex-col items-center justify-center text-center">
+                    {/* GDPR Notice inside Uploader */}
+                    {!gdprConsent && !success && (
+                        <div className="mb-6 p-3 bg-white/5 rounded-lg border border-white/10 max-w-md">
+                            <label className="flex items-start gap-3 cursor-pointer group text-left">
+                                <div className="relative flex items-center mt-1">
+                                    <input 
+                                        type="checkbox"
+                                        checked={gdprConsent}
+                                        onChange={(e) => onGdprChange?.(e.target.checked)}
+                                        className="peer sr-only"
+                                    />
+                                    <div className="w-4 h-4 border-2 border-white/30 rounded bg-transparent peer-checked:bg-[#00E599] peer-checked:border-[#00E599] transition-all"></div>
+                                    <Check size={10} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-black opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                </div>
+                                <span className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors">
+                                    I agree to the <a href="#" className="underline text-white hover:text-[#00E599]" onClick={(e) => e.stopPropagation()}>Privacy Policy</a> and consent to the processing of my personal data.
+                                </span>
+                            </label>
+                        </div>
+                    )}
+
                     {isProcessing ? (
                         <>
                             <Loader2 className="w-10 h-10 text-[#00E599] animate-spin mb-4" />

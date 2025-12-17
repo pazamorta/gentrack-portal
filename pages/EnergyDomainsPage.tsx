@@ -18,7 +18,7 @@ const getTabs = (): FeatureTab[] => [
     description:
       'Balance generation, grid constraints, and customer demand with AI-driven optimisation across your electricity portfolio.',
     cta: 'Optimise Electricity',
-    image: 'https://files.peachworlds.com/website/d37bd39f-8985-4fc2-a8db-34643a6a4f3b/frame-170747934722.png',
+    image: `${import.meta.env.BASE_URL}Platform.gif`,
   },
   {
     id: 'gas',
@@ -26,7 +26,7 @@ const getTabs = (): FeatureTab[] => [
     description:
       'Track gas flows, contracts, and compliance end-to-end with configurable workflows purpose-built for energy retailers.',
     cta: 'Optimise Gas',
-    image: 'https://files.peachworlds.com/website/0ec8a55d-4b44-4719-a5d7-2aec723b0eb4/22-95.png',
+    image: `${import.meta.env.BASE_URL}Solutions.gif`,
   },
 ];
 

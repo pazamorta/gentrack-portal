@@ -27,13 +27,18 @@
   position: absolute;
   bottom: 0;
   left: 0;
-  background: linear-gradient(to top, rgba(1, 88, 113, 0.3), transparent); /* Gradient based on requested color */
+  background: linear-gradient(
+    to top,
+    rgba(1, 88, 113, 0.3),
+    transparent
+  ); /* Gradient based on requested color */
   z-index: 0;
   pointer-events: none;
 }
 
 .wave {
-  background: url(https://s3-us-west-2.amazonaws.com/s.cdpn.io/85486/wave.svg) repeat-x; 
+  background: url(https://s3-us-west-2.amazonaws.com/s.cdpn.io/85486/wave.svg)
+    repeat-x;
   position: absolute;
   top: -198px;
   width: 6400px;
@@ -65,11 +70,12 @@
 }
 
 @keyframes swell {
-  0%, 100% {
-    transform: translate3d(0,-25px,0);
+  0%,
+  100% {
+    transform: translate3d(0, -25px, 0);
   }
   50% {
-    transform: translate3d(0,5px,0);
+    transform: translate3d(0, 5px, 0);
   }
 }
 
@@ -84,8 +90,49 @@
   }
 }
 
+@keyframes slide-in-from-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-from-top {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: fade-in;
+  animation-duration: 0.5s;
+}
+
+.slide-in-from-bottom-2 {
+  animation-name: slide-in-from-bottom;
+  animation-duration: 0.4s;
+}
+
+.slide-in-from-top-2 {
+  animation-name: slide-in-from-top;
+  animation-duration: 0.3s;
 }
 
 /* Chart Styles */

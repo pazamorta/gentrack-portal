@@ -7,30 +7,23 @@ const testimonials: TestimonialData[] = [
     quote: "Switching to Oxygen cut our manual work in half. The automation flows just work — we closed more deals in a week than the entire last year.",
     name: "Alex Chen",
     role: "Operations Manager",
-    image: "https://files.peachworlds.com/website/08a73718-7e9d-4610-9f13-ee44f6dfd644/aaaa.png"
+    image: "https://placehold.co/100x100?text=AC"
   },
   {
     quote: "Finally, a tool that feels smart but stays simple. Our team collaborates faster, tracks everything, and we’ve grown our active users by 40%.",
     name: "Priya Das",
     role: "Head of Product",
-    image: "https://files.peachworlds.com/website/e88dafa2-2058-4c11-ae22-5da0f944e490/pexels-emmy-e-1252107-2381069.jpg"
+    image: "https://placehold.co/100x100?text=PD"
   },
   {
     quote: "I love how intuitive it is. It plugs right into our stack, keeps data secure, and helps us ship new ideas without the chaos.",
     name: "Daniel Rivera",
     role: "CTO",
-    image: "https://files.peachworlds.com/website/9554b8bf-57b0-467c-bd7a-a435b55919ce/pexels-pranavdigwal-32976.jpg"
+    image: "https://placehold.co/100x100?text=DR"
   }
 ];
 
-const clientLogos = [
-    "https://files.peachworlds.com/website/b396a935-afa4-440e-aa3f-76a19456ccd8/div-framer-1lv732o-1.png",
-    "https://files.peachworlds.com/website/906f3c0a-6109-498e-8e61-d5aead25e11e/div-framer-1lv732o-.png",
-    "https://files.peachworlds.com/website/a95a9bee-145d-417d-905f-ce3449096aa8/div-framer-1lv732o-4.png",
-    "https://files.peachworlds.com/website/f20c7409-da7b-403a-b284-897a87b4d325/div-framer-1lv732o-3.png",
-    "https://files.peachworlds.com/website/8478723a-a4ac-47c1-b382-1433581fdf2e/div-framer-1lv732o-5.png",
-    "https://files.peachworlds.com/website/1bceed5c-b9f1-4ff5-bd5a-413e68acece5/div-framer-1lv732o-2.png"
-];
+
 
 export const Testimonials: React.FC = () => {
   return (

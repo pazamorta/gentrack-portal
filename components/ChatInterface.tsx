@@ -1,7 +1,17 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowUp, Mic, Square, Loader2, Volume2 } from "lucide-react";
+import { ArrowUp, Mic, Square, Loader2, Volume2, Paperclip, FileText, X, Minimize2 } from "lucide-react";
 import { GoogleGenAI, Modality } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
+import { salesforceService, ParsedInvoiceData } from '../services/salesforce';
+
+// --- Types ---
+
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
 
 // --- Audio Helper Functions ---
 
@@ -37,6 +47,9 @@ function decodeAudioData(
 // --- Component ---
 
 export const ChatInterface: React.FC = () => {
+  // Chat mode state
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
@@ -44,12 +57,23 @@ export const ChatInterface: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showQuickQuestions, setShowQuickQuestions] = useState(false);
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
+  const [suggestUpload, setSuggestUpload] = useState(false);
+  const [quoteDetails, setQuoteDetails] = useState<{ consumption: number; price: number } | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const chatMessagesRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (chatMessagesRef.current && isFullScreen) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+    }
+  }, [chatHistory, isFullScreen]);
 
   // Close quick questions when clicking outside
   useEffect(() => {
@@ -103,6 +127,7 @@ export const ChatInterface: React.FC = () => {
   `;
 
   const quickQuestions = [
+    "Upload your latest invoice",
     "How can I optimize my utility operations?",
     "What energy domains do you support?",
     "How does the platform integrate with existing systems?",
@@ -110,12 +135,20 @@ export const ChatInterface: React.FC = () => {
   ];
 
   const handleQuickQuestion = (question: string) => {
-    setInputValue(question);
     setShowQuickQuestions(false);
     setFollowUpQuestions([]);
+    
+    // Check if the question is "Upload your latest invoice"
+    if (question.toLowerCase().includes('upload') && question.toLowerCase().includes('invoice')) {
+      // Trigger file upload dialog
+      fileInputRef.current?.click();
+      return;
+    }
+    
     // Auto-submit the question
     setTimeout(() => {
       handleSend(question);
+      setInputValue(""); // Clear input after sending
     }, 100);
   };
 
@@ -174,9 +207,146 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
     }
   };
 
+  const processInvoiceForQuote = async (file: File) => {
+    if (!ai) return;
+    
+    // Add user message about uploading invoice
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: `Uploaded invoice: ${file.name}`,
+      timestamp: new Date()
+    };
+    setChatHistory(prev => [...prev, userMessage]);
+    
+    // Switch to full-screen mode
+    setIsFullScreen(true);
+    
+    setIsLoading(true);
+    setResponse("Analyzing invoice and creating Salesforce records...");
+
+    try {
+        // Convert file to base64
+        const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve((reader.result as string).split(',')[1]);
+            reader.onerror = error => reject(error);
+        });
+
+        const prompt = `
+        Analyze this invoice image and extract the following data in strict JSON format:
+        {
+          "companyName": "string",
+          "companyNumber": "string (if found, otherwise empty)",
+          "accountNumber": "string",
+          "invoiceNumber": "string",
+          "invoiceDate": "YYYY-MM-DD",
+          "totalAmount": number,
+          "totalConsumption": number (total energy consumption in MWh, convert if necessary),
+          "contactFirstName": "string (contact person first name if found)",
+          "contactLastName": "string (contact person last name if found)",
+          "contactEmail": "string (contact email if found)",
+          "contactPhone": "string (contact phone if found)",
+          "sites": [
+            {
+              "name": "string",
+              "address": "string",
+              "meterPoints": [
+                { "mpan": "string", "meterNumber": "string" }
+              ]
+            }
+          ]
+        }
+        ensure valid JSON.
+      `;
+
+      const result = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [
+            {
+                role: "user",
+                parts: [
+                    { inlineData: { mimeType: file.type, data: base64 } },
+                    { text: prompt }
+                ]
+            }
+        ]
+      });
+
+      const text = result.text || "";
+      const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const data: ParsedInvoiceData = JSON.parse(jsonStr);
+
+      const consumption = data.totalConsumption || 0;
+      const calculatedPrice = consumption * 0.10; // 10p per MWh
+
+      setQuoteDetails({ consumption, price: calculatedPrice });
+
+      // Save to Salesforce
+      const salesforceResult = await salesforceService.createRecordsFromInvoice(data);
+
+      const responseMsg = `**✅ Invoice Processed Successfully**\n\n` +
+        `**Company:** ${data.companyName}\n` +
+        `**Invoice Number:** ${data.invoiceNumber || 'N/A'}\n` +
+        `**Total Consumption:** ${consumption.toFixed(2)} MWh\n` +
+        `**Estimated Price:** £${calculatedPrice.toFixed(2)} (at 10p/MWh)\n\n` +
+        `**Salesforce Records Created:**\n` +
+        `${salesforceResult.message}\n\n` +
+        `All details have been saved to Salesforce! 🎉`;
+      
+      // Add assistant message to chat history
+      const assistantMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: responseMsg,
+        timestamp: new Date()
+      };
+      setChatHistory(prev => [...prev, assistantMessage]);
+      
+      setResponse(responseMsg);
+      await speakResponse(`I've analyzed your invoice and created the Salesforce records. Your estimated price is £${calculatedPrice.toFixed(2)}.`);
+
+    } catch (error) {
+        console.error("Error processing invoice:", error);
+        const errorMsg = `**❌ Error Processing Invoice**\n\n${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease ensure:\n• The invoice is a clear image or PDF\n• Your Salesforce credentials are configured correctly\n• You have the necessary permissions in Salesforce`;
+        
+        // Add error message to chat history
+        const errorAssistantMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: errorMsg,
+          timestamp: new Date()
+        };
+        setChatHistory(prev => [...prev, errorAssistantMessage]);
+        
+        setResponse(errorMsg);
+    } finally {
+        setIsLoading(false);
+        setSuggestUpload(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+        processInvoiceForQuote(e.target.files[0]);
+    }
+  };
+
   const handleSend = async (customQuestion?: string) => {
     const questionToSend = customQuestion || inputValue;
     if (!questionToSend.trim()) return;
+
+    // Clear input immediately
+    setInputValue("");
+
+    // Check for quote intent
+    if (questionToSend.toLowerCase().includes('quote') || questionToSend.toLowerCase().includes('price')) {
+        setResponse("I can help with that. Please upload your energy invoice, and I'll calculate a quote for you.");
+        setSuggestUpload(true);
+        setShowQuickQuestions(false);
+        return;
+    }
 
     // Check if API key is configured
     if (!ai) {
@@ -184,13 +354,24 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
       return;
     }
 
+    // Add user message to chat history
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: questionToSend,
+      timestamp: new Date()
+    };
+    
+    setChatHistory(prev => [...prev, userMessage]);
+    
+    // Always trigger full-screen mode when sending a message
+    // (whether it's the first message or continuing after minimize)
+    setIsFullScreen(true);
+
     setIsLoading(true);
     setResponse(null);
     setFollowUpQuestions([]);
     const userPrompt = questionToSend;
-    if (!customQuestion) {
-      setInputValue("");
-    }
     setShowQuickQuestions(false);
 
     try {
@@ -204,6 +385,16 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
       });
 
       const textResponse = result.text || "I couldn't generate a response.";
+      
+      // Add assistant message to chat history
+      const assistantMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: textResponse,
+        timestamp: new Date()
+      };
+      
+      setChatHistory(prev => [...prev, assistantMessage]);
       setResponse(textResponse);
       setIsLoading(false);
 
@@ -214,7 +405,17 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
       await speakResponse(textResponse);
     } catch (error) {
       console.error("Error generating content:", error);
-      setResponse("Sorry, I encountered an error processing your request.");
+      const errorMessage = "Sorry, I encountered an error processing your request.";
+      
+      const errorAssistantMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: errorMessage,
+        timestamp: new Date()
+      };
+      
+      setChatHistory(prev => [...prev, errorAssistantMessage]);
+      setResponse(errorMessage);
       setIsLoading(false);
     }
   };
@@ -367,6 +568,209 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
     }
   }, [response]);
 
+  // Full-screen chat mode
+  if (isFullScreen) {
+    return (
+      <div className="fixed inset-0 z-40 bg-gradient-to-br from-[#0A0F1E] via-[#0D1425] to-[#0A0F1E] animate-in fade-in duration-500">
+        {/* Floating Minimize Button */}
+        <button
+          onClick={() => setIsFullScreen(false)}
+          className="fixed top-20 right-6 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 transition-all text-gray-300 hover:text-white shadow-lg"
+          title="Minimize chat"
+        >
+          <Minimize2 size={20} />
+        </button>
+
+        {/* Chat Messages */}
+        <div 
+          ref={chatMessagesRef}
+          className={`absolute top-24 left-0 right-0 overflow-y-auto px-4 py-6 ${
+            followUpQuestions.length > 0 ? 'bottom-56' : 'bottom-32'
+          }`}
+          style={{ scrollBehavior: 'smooth' }}
+        >
+          <div className="max-w-4xl mx-auto space-y-6">
+            {chatHistory.map((message, index) => (
+              <div
+                key={message.id}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2`}
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <div className={`max-w-[80%] ${message.role === 'user' ? 'order-2' : 'order-1'}`}>
+                  {/* Message Bubble */}
+                  <div
+                    className={`rounded-2xl p-5 ${
+                      message.role === 'user'
+                        ? 'bg-gradient-to-br from-[#00E599] to-[#00CC88] text-black'
+                        : 'bg-surface/80 backdrop-blur-md border border-white/10 text-gray-200'
+                    }`}
+                  >
+                    {message.role === 'assistant' && (
+                      <div className="flex items-center gap-2 mb-2 text-[#69F0C9] text-xs font-bold uppercase tracking-wider">
+                        Oxygen AI
+                        {isPlaying && index === chatHistory.length - 1 && (
+                          <Volume2 size={12} className="animate-pulse" />
+                        )}
+                      </div>
+                    )}
+                    <div className={`text-base leading-relaxed text-left ${message.role === 'user' ? 'font-medium' : ''}`}>
+                      {message.role === 'assistant' ? (
+                        <ReactMarkdown
+                          components={{
+                            strong: ({node, ...props}) => <span className="font-bold text-white" {...props} />,
+                            p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                            ul: ({node, ...props}) => <ul className="list-disc list-inside mb-2" {...props} />,
+                            li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                            a: ({node, ...props}) => <a className="text-[#00E599] hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
+                          }}
+                        >
+                          {message.content}
+                        </ReactMarkdown>
+                      ) : (
+                        message.content
+                      )}
+                    </div>
+                  </div>
+                  {/* Timestamp */}
+                  <div className={`text-xs text-gray-500 mt-1 px-2 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {/* Loading indicator */}
+            {isLoading && (
+              <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2">
+                <div className="max-w-[80%]">
+                  <div className="bg-surface/80 backdrop-blur-md border border-white/10 rounded-2xl p-5">
+                    <div className="flex items-center gap-2 mb-2 text-[#69F0C9] text-xs font-bold uppercase tracking-wider">
+                      Oxygen AI
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-400">
+                      <Loader2 size={16} className="animate-spin" />
+                      <span className="text-sm">Thinking...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Follow-up Questions */}
+        {followUpQuestions.length > 0 && !isLoading && (
+          <div className="absolute bottom-24 left-0 right-0 px-4 pb-4 bg-gradient-to-t from-[#0A0F1E] via-[#0A0F1E] to-transparent pt-6">
+            <div className="max-w-4xl mx-auto">
+              <p className="text-sm text-gray-400 mb-3 px-2">Related questions:</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {followUpQuestions.map((question, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleQuickQuestion(question)}
+                    className="bg-surface/50 border border-white/10 rounded-xl p-4 text-left hover:bg-surface/70 hover:border-white/20 transition-all duration-300 text-gray-200 hover:text-white group"
+                  >
+                    <p className="text-sm font-display font-medium group-hover:translate-x-1 transition-transform">
+                      {question}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Input Area */}
+        <div className="absolute bottom-0 left-0 right-0 bg-black/20 backdrop-blur-md border-t border-white/10 p-4">
+          <div className="max-w-4xl mx-auto">
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              accept="image/*,application/pdf"
+              className="hidden"
+            />
+            
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#9F55FF] to-[#5588FF] rounded-full opacity-30 group-hover:opacity-60 transition duration-500 blur"></div>
+              <div className="relative bg-white rounded-full flex items-center p-2 pr-2 shadow-xl">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSend();
+                    }
+                  }}
+                  placeholder={
+                    isRecording
+                      ? "Listening..."
+                      : "Ask a follow-up question..."
+                  }
+                  className="flex-1 bg-transparent border-none outline-none px-6 text-gray-800 placeholder-gray-500 text-lg h-12 font-display"
+                  disabled={isLoading || isRecording}
+                />
+
+                <div className="flex items-center gap-2">
+                  {/* Upload Button */}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`p-3 rounded-full transition-all duration-300 flex items-center justify-center ${
+                      suggestUpload 
+                        ? "bg-[#00E599] text-black animate-bounce shadow-lg" 
+                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                    }`}
+                    title="Upload Invoice"
+                  >
+                    <Paperclip size={20} />
+                  </button>
+                  
+                  {/* Voice Button */}
+                  <button
+                    onClick={toggleRecording}
+                    className={`p-3 rounded-full transition-all duration-300 flex items-center justify-center ${
+                      isRecording
+                        ? "bg-red-500 text-white animate-pulse shadow-red-500/50 shadow-lg"
+                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                    }`}
+                    title="Voice Input"
+                  >
+                    {isRecording ? (
+                      <Square size={20} fill="currentColor" />
+                    ) : (
+                      <Mic size={20} />
+                    )}
+                  </button>
+
+                  {/* Send Button */}
+                  <button
+                    onClick={() => handleSend()}
+                    disabled={isLoading || (!inputValue && !isRecording)}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                      inputValue
+                        ? "bg-[#00E599] text-black hover:bg-[#00CC88] shadow-lg shadow-[#00E599]/30 transform hover:scale-105"
+                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    {isLoading ? (
+                      <Loader2 size={24} className="animate-spin" />
+                    ) : (
+                      <ArrowUp size={24} strokeWidth={2.5} />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Compact mode (initial view)
   return (
     <div className="w-full mx-auto animate-fade-in-up delay-200 font-sans" ref={containerRef}>
       <div className="flex flex-col gap-6 p-4 rounded-3xl max-w-2xl mx-auto">
@@ -379,6 +783,14 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
 
         {/* Chat Input Box */}
         <div className="relative group">
+            {/* Hidden File Input */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept="image/*,application/pdf"
+                className="hidden"
+            />
           <div className="absolute -inset-0.5 bg-gradient-to-r from-[#9F55FF] to-[#5588FF] rounded-full opacity-30 group-hover:opacity-60 transition duration-500 blur"></div>
           <div className="relative bg-white rounded-full flex items-center p-2 pr-2 shadow-xl">
             <input
@@ -415,6 +827,18 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
             />
 
             <div className="flex items-center gap-2">
+              {/* Upload Button */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className={`p-3 rounded-full transition-all duration-300 flex items-center justify-center ${
+                    suggestUpload 
+                    ? "bg-[#00E599] text-black animate-bounce shadow-lg" 
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+                title="Upload Invoice"
+              >
+                <Paperclip size={20} />
+              </button>
               {/* Voice Button */}
               <button
                 onClick={toggleRecording}
@@ -473,8 +897,8 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
           )}
         </div>
 
-        {/* Response Area */}
-        {response && (
+        {/* Response Area - Only shown in compact mode if no full screen yet */}
+        {response && !isFullScreen && (
           <div className="space-y-4">
             <div className="bg-surface/80 backdrop-blur-md border border-white/10 rounded-2xl p-6 text-left animate-in fade-in slide-in-from-bottom-2">
               <div className="flex items-center gap-2 mb-2 text-[#69F0C9] text-sm font-bold uppercase tracking-wider">

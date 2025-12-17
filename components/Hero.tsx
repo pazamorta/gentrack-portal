@@ -25,7 +25,6 @@ export const Hero: React.FC = () => {
         {/* CTAs */}
         <div className="flex flex-col md:flex-row items-center justify-center gap-4 animate-fade-in-up delay-400 pt-4">
             <Button href="/get-started">Get Started</Button>
-            <Button variant="outline">See It in Action</Button>
         </div>
 
         {/* AI Chat Interface - target for "AI Assistant" nav link */}

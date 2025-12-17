@@ -9,6 +9,8 @@ type Step = 1 | 2 | 3;
 export const B2BForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [formData, setFormData] = useState({
+    userType: 'company',
+    tpiIdentifier: '',
     companyName: '',
     companyNumber: '',
     website: '',
@@ -25,12 +27,21 @@ export const B2BForm: React.FC = () => {
     timeline: '',
     budget: '',
     additionalInfo: '',
+    gdprConsent: false,
+    portfolioSize: '',
+    leadId: '',
   });
+  const [showManualForm, setShowManualForm] = useState(false);
   const [invoiceData, setInvoiceData] = useState<ParsedInvoiceData | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
   };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,11 +57,12 @@ export const B2BForm: React.FC = () => {
   const validateStep = (step: Step): boolean => {
     switch (step) {
       case 1:
-        return !!(formData.companyName && formData.companyNumber && formData.contactName && formData.email && formData.phone && formData.jobTitle);
+        if (formData.userType === 'tpi' && !formData.tpiIdentifier) return false;
+        return !!(formData.gdprConsent && formData.companyName && formData.companyNumber && formData.contactName && formData.email && formData.phone && formData.jobTitle);
       case 2:
         return !!(formData.industry && formData.companySize);
       case 3:
-        return !!formData.useCase;
+        return !!(formData.useCase && formData.portfolioSize);
       default:
         return false;
     }
@@ -58,6 +70,7 @@ export const B2BForm: React.FC = () => {
 
   const handleInvoiceParsed = (data: ParsedInvoiceData) => {
     setInvoiceData(data);
+    setShowManualForm(true);
     setFormData(prev => ({
       ...prev,
       companyName: data.companyName || prev.companyName,
@@ -66,8 +79,108 @@ export const B2BForm: React.FC = () => {
     }));
   };
 
-  const handleNext = () => {
+  const handleDownloadTemplate = () => {
+    const headers = [
+      'Service Point',
+      'Fuel Type',
+      'Address',
+      'Postcode',
+      'Product Preference*',
+      'Duration Options*',
+      'Annual Consumption*',
+      'Site Name*',
+      'Service Point Contact Name*',
+      'Service Point Contact email*',
+      'Service Point Contact tel*',
+      'Service Point Company Number'
+    ];
+    
+    const csvContent = headers.join(',') + '\n';
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'portfolio_template.csv');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const text = await file.text();
+    const rows = text.split('\n').map(row => row.split(','));
+    const headers = rows[0].map(h => h.trim());
+    
+    // Simple CSV parsing (assuming no commas in values for MVP)
+    const sitesMap = new Map<string, any>();
+    
+    rows.slice(1).forEach(row => {
+      if (row.length < 2) return; // Skip empty rows
+      
+      const getValue = (headerPart: string) => {
+        const index = headers.findIndex(h => h.includes(headerPart));
+        return index >= 0 ? row[index]?.trim() : '';
+      };
+
+      const siteName = getValue('Site Name') || 'Unknown Site';
+      const servicePointId = getValue('Service Point');
+      
+      if (!sitesMap.has(siteName)) {
+        sitesMap.set(siteName, {
+          name: siteName,
+          address: `${getValue('Address')} ${getValue('Postcode')}`.trim(),
+          meterPoints: []
+        });
+      }
+
+      if (servicePointId) {
+        sitesMap.get(siteName).meterPoints.push({
+          mpan: servicePointId,
+          meterNumber: servicePointId,
+          address: `${getValue('Address')} ${getValue('Postcode')}`.trim(),
+        });
+      }
+    });
+
+    const parsedSites = Array.from(sitesMap.values());
+    
+    setInvoiceData(prev => ({
+      ...prev!, // Assumes user might have uploaded invoice or matches other data. If null, we create new.
+      companyName: prev?.companyName || formData.companyName,
+      companyNumber: prev?.companyNumber || formData.companyNumber,
+      // @ts-ignore
+      sites: parsedSites
+    }));
+    
+    alert(`Successfully loaded ${parsedSites.length} sites from spreadsheet.`);
+  };
+
+  const handleNext = async () => {
     if (validateStep(currentStep) && currentStep < 3) {
+      // Create Lead on Step 1 completion
+      if (currentStep === 1) {
+          try {
+              console.log('Creating Lead...');
+              // Only create if we don't have one? Or update? For MVP, always create new if not present.
+              if (!formData.leadId) {
+                  const res = await salesforceService.createLead(formData);
+                  if (res.success && res.leadId) {
+                      setFormData(prev => ({ ...prev, leadId: res.leadId! }));
+                      console.log('Lead created:', res.leadId);
+                  }
+              }
+          } catch (e) {
+              console.error('Failed to create lead:', e);
+              // We proceed anyway, not blocking user flow
+          }
+      }
+      
       setCurrentStep((prev) => (prev + 1) as Step);
     }
   };
@@ -83,22 +196,45 @@ export const B2BForm: React.FC = () => {
     if (validateStep(3)) {
       console.log('Form submitted:', formData);
 
-      if (invoiceData) {
-        console.log('Creating Salesforce records...');
-        // Merge latest form data into invoice data (in case user edited name)
-        const finalInvoiceData = {
-          ...invoiceData,
+      try {
+        console.log('Creating/Updating Salesforce records...');
+        
+        // Construct final payload merging invoice data and form data
+        const finalInvoiceData: ParsedInvoiceData = {
+          // Base invoice data or defaults
           companyName: formData.companyName,
           companyNumber: formData.companyNumber,
+          contactFirstName: formData.contactName.split(' ')[0],
+          contactLastName: formData.contactName.split(' ').slice(1).join(' ') || 'Unknown',
+          contactEmail: formData.email,
+          contactPhone: formData.phone,
+          sites: invoiceData?.sites || [],
+          fileName: invoiceData?.fileName,
+          fileContent: invoiceData?.fileContent,
+          invoiceNumber: invoiceData?.invoiceNumber,
+          totalAmount: invoiceData?.totalAmount,
+          totalConsumption: invoiceData?.totalConsumption,
+          
+          // Form fields for conversion
+          leadId: formData.leadId, // This triggers conversion logic in backend
+          industry: formData.industry,
+          companySize: formData.companySize,
+          useCase: formData.useCase,
+          timeline: formData.timeline,
+          budget: formData.budget,
+          portfolioSize: formData.portfolioSize
         };
 
         const response = await salesforceService.createRecordsFromInvoice(finalInvoiceData);
         if (response.success) {
           console.log(response.message);
           alert('Success! Your request has been submitted and Salesforce records have been created.');
+        } else {
+             alert('Submission processed, but there might be a delay in Salesforce updates.');
         }
-      } else {
-        alert('Thank you! Your request has been submitted successfully.');
+      } catch (error) {
+        console.error('Submission error:', error);
+        alert('There was an error submitting your request. Please try again.');
       }
     }
   };
@@ -171,12 +307,84 @@ export const B2BForm: React.FC = () => {
               <h3 className="text-2xl font-bold mb-2 text-white">Company and Contact Information</h3>
               <p className="text-secondary mb-8">Let's start with the basics. Upload your invoice to auto-fill details.</p>
 
-              <InvoiceUploader onDataParsed={handleInvoiceParsed} />
+              {/* User Type Switch */}
+              <div className="flex justify-center mb-8">
+                <div className="bg-white/5 p-1 rounded-full inline-flex border border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, userType: 'company' }))}
+                    className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${formData.userType === 'company'
+                        ? 'bg-[#00E599] text-black shadow-lg'
+                        : 'text-gray-400 hover:text-white'
+                      }`}
+                  >
+                    For Your Company
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, userType: 'tpi' }))}
+                    className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${formData.userType === 'tpi'
+                        ? 'bg-[#00E599] text-black shadow-lg'
+                        : 'text-gray-400 hover:text-white'
+                      }`}
+                  >
+                    As A TPI
+                  </button>
+                </div>
+              </div>
 
-              <div className="space-y-6">
+              {formData.userType === 'company' && !showManualForm && (
+                 <div className="space-y-8">
+                    <InvoiceUploader 
+                        onDataParsed={handleInvoiceParsed} 
+                        gdprConsent={formData.gdprConsent}
+                        onGdprChange={(checked) => setFormData(prev => ({ ...prev, gdprConsent: checked }))}
+                        onGdprError={() => {
+                            // Optional: Could add a toast or error state here if needed
+                            // But for now the UI disabling/message in InvoiceUploader will handle it
+                        }}
+                    />
+                    <div className="text-center">
+                        <button 
+                            type="button" 
+                            onClick={() => setShowManualForm(true)}
+                            className="text-sm text-gray-400 hover:text-white underline transition-colors"
+                        >
+                            Or enter details manually
+                        </button>
+                    </div>
+                 </div>
+              )}
+
+              {/* Show form if TPI OR (Company AND Manual Mode Active) */}
+              {(formData.userType === 'tpi' || showManualForm) && (
+              <div className="space-y-6 animate-fade-in">
+                {formData.userType === 'tpi' && (
+                     <p className="text-sm text-gray-400 mb-4 bg-white/5 p-4 rounded-xl border border-white/10">
+                        As a TPI, please verify your company details below.
+                     </p>
+                )}
                 <div>
+                  {formData.userType === 'tpi' && (
+                    <div className="mb-6">
+                      <label htmlFor="tpiIdentifier" className="block text-sm font-medium text-gray-300 mb-2">
+                        TPI Identifier *
+                      </label>
+                      <input
+                        type="text"
+                        id="tpiIdentifier"
+                        name="tpiIdentifier"
+                        required
+                        value={formData.tpiIdentifier}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/30 transition-colors"
+                        placeholder="Enter your TPI Identifier"
+                      />
+                    </div>
+                  )}
+
                   <label htmlFor="companyName" className="block text-sm font-medium text-gray-300 mb-2">
-                    Company Name *
+                    {formData.userType === 'tpi' ? 'Client Account Name *' : 'Company Name *'}
                   </label>
                   <input
                     type="text"
@@ -186,7 +394,7 @@ export const B2BForm: React.FC = () => {
                     value={formData.companyName}
                     onChange={handleChange}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/30 transition-colors"
-                    placeholder="Enter company name"
+                    placeholder={formData.userType === 'tpi' ? "Enter client account name" : "Enter company name"}
                   />
                 </div>
 
@@ -286,7 +494,9 @@ export const B2BForm: React.FC = () => {
                     />
                   </div>
                 </div>
+
               </div>
+              )}
             </div>
           )}
 
@@ -484,6 +694,67 @@ export const B2BForm: React.FC = () => {
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/30 transition-colors resize-none"
                     placeholder="Tell us more about your specific needs, challenges, or questions..."
                   />
+                </div>
+                
+                <div>
+                  <label htmlFor="portfolioSize" className="block text-sm font-medium text-gray-300 mb-2">
+                    Portfolio Size *
+                  </label>
+                  <select
+                    id="portfolioSize"
+                    name="portfolioSize"
+                    required
+                    value={formData.portfolioSize}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 transition-colors"
+                  >
+                    <option value="">Select portfolio size</option>
+                    <option value="1-10">1-10 Service Points</option>
+                    <option value="11-50">11-50 Service Points</option>
+                    <option value="51-100">51-100 Service Points</option>
+                    <option value="101-500">101-500 Service Points</option>
+                    <option value="500+">500+ Service Points</option>
+                  </select>
+                </div>
+
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                  <h4 className="text-lg font-medium text-white mb-2">Upload Portfolio</h4>
+                  <p className="text-secondary text-sm mb-4">
+                    Download our template to provide your site details, then upload it here to automatically create your portfolio.
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <button
+                      type="button"
+                      onClick={handleDownloadTemplate}
+                      className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Download Spreadsheet
+                    </button>
+                    
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept=".csv"
+                        onChange={handleFileUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <button
+                        type="button"
+                        className="w-full px-4 py-2 bg-[#00E599]/10 hover:bg-[#00E599]/20 text-[#00E599] border border-[#00E599]/50 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        Upload Spreadsheet
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {invoiceData?.sites && invoiceData.sites.length > 0 && (
+                     <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                        <p className="text-green-400 text-sm">
+                           ✓ {invoiceData.sites.length} sites loaded from file
+                        </p>
+                     </div>
+                  )}
                 </div>
               </div>
             </div>

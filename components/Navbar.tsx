@@ -97,7 +97,7 @@ export const Navbar: React.FC = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-4">
-            <Button variant="primary" className="px-6 py-2 text-sm">Sign In</Button>
+            <Button variant="primary" className="px-6 py-2 text-sm">Access Portal</Button>
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -145,7 +145,7 @@ export const Navbar: React.FC = () => {
             )
           ))}
           <div className="h-px bg-white/10 my-2"></div>
-          <Button variant="primary" className="w-full justify-center">Sign In</Button>
+          <Button variant="primary" className="w-full justify-center">Access Portal</Button>
         </div>
       )}
     </nav>

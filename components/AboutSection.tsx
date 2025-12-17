@@ -43,3 +43,4 @@ export const AboutSection: React.FC = () => {
   );
 };
 
+

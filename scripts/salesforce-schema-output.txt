@@ -1,0 +1,572 @@
+[dotenv@17.2.3] injecting env (7) from .env.local -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+✅ Connected to Salesforce
+
+
+================================================================================
+📋 Object: Account
+================================================================================
+
+Label: Account
+API Name: Account
+Createable: true
+
+Creatable Fields:
+--------------------------------------------------------------------------------
+  Account_Plan__c                          (url            ) - Account Plan
+  AccountNumber                            (string         ) - Account Number
+  AccountSource                            (picklist       ) - Account Source
+  analyticsdemo_batch_id__c                (string         ) - analyticsdemo_batch_id__c
+  AnnualRevenue                            (currency       ) - Annual Revenue
+  BillingCity                              (string         ) - Billing City
+  BillingCountry                           (string         ) - Billing Country
+  BillingGeocodeAccuracy                   (picklist       ) - Billing Geocode Accuracy
+  BillingLatitude                          (double         ) - Billing Latitude
+  BillingLongitude                         (double         ) - Billing Longitude
+  BillingPostalCode                        (string         ) - Billing Zip/Postal Code
+  BillingState                             (string         ) - Billing State/Province
+  BillingStreet                            (textarea       ) - Billing Street
+  blng__BillToContact__c                   (reference      ) - Bill To Contact
+  blng__CustomerProfileId__c               (string         ) - Customer Profile Id
+  blng__DefaultPaymentType__c              (string         ) - Default Payment Type
+  BudgetBillAmount__c                      (currency       ) - Budget Bill Amount
+  BudgetBilling__c                         (boolean        ) - Budget Billing [REQUIRED]
+  CreatedDate__c                           (datetime       ) - Created Date
+  Credit_Balance__c                        (currency       ) - Credit Balance
+  CreditLimit__c                           (currency       ) - Credit Limit
+  CurrencyIsoCode                          (picklist       ) - Account Currency
+  Description                              (textarea       ) - Account Description
+  EDY_ORGCUSTOM__DB__c                     (boolean        ) - DB [REQUIRED]
+  EDY_ORGCUSTOM__DB__pc                    (boolean        ) - DB [REQUIRED]
+  EDY_ORGCUSTOM__Old_Name__c               (string         ) - Old Name
+  EDY_ORGCUSTOM__Old_Title__pc             (string         ) - Old Title
+  et4ae5__HasOptedOutOfMobile__pc          (boolean        ) - Mobile Opt Out [REQUIRED]
+  et4ae5__Mobile_Country_Code__pc          (picklist       ) - Mobile Country Code
+  External_ID__c                           (string         ) - External ID
+  External_ID__pc                          (string         ) - External ID
+  Fax                                      (phone          ) - Account Fax
+  FirstName                                (string         ) - First Name
+  gtx__Active_Debt_Management__c           (boolean        ) - Active Debt Management [REQUIRED]
+  gtx__Additional_Need_Priority_Service__c (boolean        ) - DEPRECATED_Additional Need Pri Service? [REQUIRED]
+  gtx__Aggressive_Contact__pc              (boolean        ) - Aggressive Contact [REQUIRED]
+  gtx__Aggressive_Contact_Description__pc  (textarea       ) - Aggressive Contact Description
+  gtx__Bill_Notifications_Channel__pc      (picklist       ) - Bill Notifications Channel
+  gtx__Billing_Account_Number__c           (string         ) - Billing Account Number
+  gtx__Brand__c                            (string         ) - Brand
+  gtx__Care_Of__c                          (string         ) - Care Of
+  gtx__Critical_Service_Priority_Service__c (boolean        ) - DEPRECATED_Critical Priority Service? [REQUIRED]
+  gtx__Customer_Account__c                 (reference      ) - Customer Account
+  gtx__Customer_Account_Number__c          (string         ) - Customer Account Number
+  gtx__Global_Reference__c                 (string         ) - DEPRECATED_Global Reference
+  gtx__Global_Reference__pc                (string         ) - DEPRECATED_Global Reference
+  gtx__Has_Suspended_Activities__c         (boolean        ) - Has Suspended Activities? [REQUIRED]
+  gtx__Head_Office_Number__c               (phone          ) - Head Office Number
+  gtx__Life_Support_Priority_Service__c    (boolean        ) - DEPRECATED_Life Support PriorityService? [REQUIRED]
+  gtx__Main_Email_Address__c               (email          ) - Main Email Address
+  gtx__Occupier__c                         (boolean        ) - DEPRECATED_Occupier? [REQUIRED]
+  gtx__Other_Communications_Channel__pc    (picklist       ) - Other Communications Channel
+  gtx__Outage_Notifications_Channel__pc    (picklist       ) - Outage Notifications Channel
+  gtx__Preferred_Name__pc                  (string         ) - Preferred Name
+  gtx__Registration_Number__c              (string         ) - Registration Number
+  gtx__Registration_Source__c              (string         ) - Registration Source
+  gtx__Tax_Registration_Number__c          (string         ) - Tax Registration Number
+  gtx__Tax_Registration_Source__c          (string         ) - Tax Registration Source
+  gtx__Trading_Name__c                     (string         ) - Trading Name
+  gtx__Type__c                             (picklist       ) - DEPRECATED_Type
+  gtx__Unique_Global_Reference__c          (string         ) - DEPRECATED_Unique Global Reference
+  gtx__Unique_Global_Reference__pc         (string         ) - Unique Global Reference
+  gtx__Uuid__c                             (string         ) - DEPRECATED_Uuid
+  gtx_sales__Contact_Id__pc                (string         ) - Contact Id
+  Industry                                 (picklist       ) - Industry
+  IsExcludedFromRealign                    (boolean        ) - Exclude from territory assignment rules [REQUIRED]
+  Jigsaw                                   (string         ) - Data.com Key
+  LastName                                 (string         ) - Last Name
+  maps__AssignmentRule__c                  (reference      ) - Maps Assignment Rule
+  Maps_Advanced_Route_Visit_Windows__c     (reference      ) - Maps Advanced Route Visit Windows
+  Name                                     (string         ) - Account Name
+  NBA_Billing_Support__c                   (boolean        ) - NBA - Billing Support [REQUIRED]
+  Notes__pc                                (textarea       ) - Notes
+  Number_Closed_Lost_Opportunities__c      (double         ) - Lost Opportunities
+  Number_Closed_Opportunities__c           (double         ) - Closed Opportunities
+  Number_Closed_Won_Opportunities__c       (double         ) - Won Opportunities
+  Number_Leads_Active__c                   (double         ) - Active Leads
+  Number_Leads_Converted__c                (double         ) - Converted Leads
+  Number_Leads_Total__c                    (double         ) - Total Leads
+  NumberOfEmployees                        (int            ) - Employees
+  OperatingHoursId                         (reference      ) - Operating Hour ID
+  OwnerId                                  (reference      ) - Owner ID [REQUIRED]
+  Ownership                                (picklist       ) - Ownership
+  ParentId                                 (reference      ) - Parent Account ID
+  Partner_Certification__c                 (picklist       ) - Partner Certification
+  Partner_Program_Level__c                 (picklist       ) - Partner Program Level
+  Partnership_Status__c                    (picklist       ) - Partnership Status
+  PersonAssistantName                      (string         ) - Assistant
+  PersonAssistantPhone                     (phone          ) - Asst. Phone
+  PersonBirthdate                          (date           ) - Birthdate
+  PersonDepartment                         (string         ) - Department
+  PersonDoNotCall                          (boolean        ) - Do Not Call [REQUIRED]
+  PersonEmail                              (email          ) - Email
+  PersonEmailBouncedDate                   (datetime       ) - Email Bounced Date
+  PersonEmailBouncedReason                 (string         ) - Email Bounced Reason
+  PersonHasOptedOutOfEmail                 (boolean        ) - Email Opt Out [REQUIRED]
+  PersonHasOptedOutOfFax                   (boolean        ) - Fax Opt Out [REQUIRED]
+  PersonHomePhone                          (phone          ) - Home Phone
+  PersonIndividualId                       (reference      ) - Individual ID
+  PersonLeadSource                         (picklist       ) - Lead Source
+  PersonMailingCity                        (string         ) - Mailing City
+  PersonMailingCountry                     (string         ) - Mailing Country
+  PersonMailingGeocodeAccuracy             (picklist       ) - Mailing Geocode Accuracy
+  PersonMailingLatitude                    (double         ) - Mailing Latitude
+  PersonMailingLongitude                   (double         ) - Mailing Longitude
+  PersonMailingPostalCode                  (string         ) - Mailing Zip/Postal Code
+  PersonMailingState                       (string         ) - Mailing State/Province
+  PersonMailingStreet                      (textarea       ) - Mailing Street
+  PersonMobilePhone                        (phone          ) - Mobile
+  PersonOtherCity                          (string         ) - Other City
+  PersonOtherCountry                       (string         ) - Other Country
+  PersonOtherGeocodeAccuracy               (picklist       ) - Other Geocode Accuracy
+  PersonOtherLatitude                      (double         ) - Other Latitude
+  PersonOtherLongitude                     (double         ) - Other Longitude
+  PersonOtherPhone                         (phone          ) - Other Phone
+  PersonOtherPostalCode                    (string         ) - Other Zip/Postal Code
+  PersonOtherState                         (string         ) - Other State/Province
+  PersonOtherStreet                        (textarea       ) - Other Street
+  PersonTitle                              (string         ) - Title
+  Phone                                    (phone          ) - Account Phone
+  pi__campaign__pc                         (string         ) - Account Engagement Campaign
+  pi__comments__pc                         (textarea       ) - Account Engagement Comments
+  pi__conversion_date__pc                  (datetime       ) - Account Engagement Conversion Date
+  pi__conversion_object_name__pc           (string         ) - Conversion Object Name
+  pi__conversion_object_type__pc           (string         ) - Conversion Object Type
+  pi__created_date__pc                     (datetime       ) - Account Engagement Created Date
+  pi__first_activity__pc                   (datetime       ) - Account Engagement First Activity
+  pi__first_search_term__pc                (string         ) - Account Engagement First Referrer Query
+  pi__first_search_type__pc                (string         ) - Account Engagement First Referrer Type
+  pi__first_touch_url__pc                  (textarea       ) - Account Engagement First Referrer
+  pi__grade__pc                            (string         ) - Account Engagement Grade
+  pi__last_activity__pc                    (datetime       ) - Account Engagement Last Activity
+  pi__Needs_Score_Synced__pc               (boolean        ) - Needs Score Synced [REQUIRED]
+  pi__notes__pc                            (textarea       ) - Account Engagement Notes
+  pi__pardot_hard_bounced__pc              (boolean        ) - Account Engagement Hard Bounced [REQUIRED]
+  pi__Pardot_Last_Scored_At__pc            (datetime       ) - Account Engagement Last Scored At
+  pi__score__pc                            (double         ) - Account Engagement Score
+  pi__url__pc                              (url            ) - Account Engagement URL
+  pi__utm_campaign__pc                     (string         ) - Google Analytics Campaign
+  pi__utm_content__pc                      (string         ) - Google Analytics Content
+  pi__utm_medium__pc                       (string         ) - Google Analytics Medium
+  pi__utm_source__pc                       (string         ) - Google Analytics Source
+  pi__utm_term__pc                         (string         ) - Google Analytics Term
+  Ptnr_Onbd_Fmwk__Onboarding_Plan__c       (reference      ) - Onboarding Template
+  Ptnr_Onbd_Fmwk__Onboarding_Plan__pc      (reference      ) - Onboarding Template
+  Ptnr_Onbd_Fmwk__Onboarding_Start_Date__pc (date           ) - Onboarding Start Date
+  Ptnr_Onbd_Fmwk__Onboarding_Status__pc    (picklist       ) - Onboarding Status
+  Ptnr_Onbd_Fmwk__Role_Function__pc        (picklist       ) - Role Function
+  Quip_URL__c                              (url            ) - Quip URL
+  Rating                                   (picklist       ) - Account Rating
+  RecordTypeId                             (reference      ) - Record Type ID
+  Salutation                               (picklist       ) - Salutation
+  SBQQ__AssetQuantitiesCombined__c         (boolean        ) - Combine Asset Quantities [REQUIRED]
+  SBQQ__ContractCoTermination__c           (picklist       ) - Contract Co-Termination
+  SBQQ__CoTermedContractsCombined__c       (boolean        ) - Combine Co-Termed Contracts [REQUIRED]
+  SBQQ__CoTerminationEvent__c              (picklist       ) - Co-Termination Event
+  SBQQ__DefaultOpportunity__c              (reference      ) - Default Opportunity
+  SBQQ__IgnoreParentContractedPrices__c    (boolean        ) - Ignore Parent Contracted Prices [REQUIRED]
+  SBQQ__PreserveBundle__c                  (boolean        ) - Preserve Bundle Structure [REQUIRED]
+  SBQQ__PriceHoldEnd__c                    (date           ) - Price Hold End
+  SBQQ__RenewalModel__c                    (picklist       ) - Renewal Model
+  SBQQ__RenewalPricingMethod__c            (picklist       ) - Renewal Pricing Method
+  SBQQ__TaxExempt__c                       (picklist       ) - Tax-Exempt
+  SDO_Analytics_Latest_Sentiment__c        (picklist       ) - Latest Sentiment
+  SDO_Application_Date__c                  (date           ) - Application Date
+  SDO_Certification_Level_c__pc            (picklist       ) - Certification Level
+  SDO_Contract_Signed__c                   (boolean        ) - Contract Signed [REQUIRED]
+  SDO_CPQ_Churn_Risk__c                    (boolean        ) - Churn Risk [REQUIRED]
+  SDO_Cust360_ChurnRisk__pc                (double         ) - Risk of Churn
+  SDO_Cust360_Contact_Picture_URL__pc      (string         ) - Cust360 Contact Picture URL
+  SDO_Cust360_CSAT__pc                     (double         ) - Cust360 CSAT
+  SDO_Cust360_Id__pc                       (string         ) - Cust360 Id
+  SDO_Cust360_Metric1__pc                  (string         ) - Cust360 Metric 1
+  SDO_Cust360_Metric2__pc                  (string         ) - Cust360 Metric 2
+  SDO_Default_Location__c                  (reference      ) - Default Location
+  SDO_Default_Price_Book__c                (reference      ) - Default Price Book
+  SDO_Maps_AA_User_Territory__c            (reference      ) - Maps - User Territory
+  SDO_MAPS_Adv_Maps_User_Assignment__c     (reference      ) - Adv Maps User Assignment
+  SDO_MAPS_Dataset_Split__c                (double         ) - Account Dataset Split
+  SDO_MAPS_Dataset_Split__pc               (double         ) - Contact Dataset Split
+  SDO_MAPS_Days_Since_Last_Visit__c        (double         ) - Days Since Last Visit
+  SDO_MAPS_Days_Since_Last_Visit__pc       (double         ) - Days Since Last Visit
+  SDO_Maps_District__c                     (string         ) - Maps Region
+  SDO_MAPS_Segment_c__c                    (string         ) - Segment
+  SDO_MAPS_Service_Tier__c                 (string         ) - Service Tier
+  SDO_MAPS_Tag__c                          (string         ) - Tag
+  SDO_MAPS_Tag_Contact__pc                 (string         ) - Tag Contact
+  SDO_Maps_TAM__c                          (double         ) - TAM
+  SDO_Maps_Territory__c                    (string         ) - Territory Name
+  SDO_MAPS_Tier__c                         (string         ) - Maps Tier
+  SDO_MAPS_Time_Per_Visit_c__c             (double         ) - Time Per Visit
+  SDO_MAPS_Value_Tier__pc                  (string         ) - Value Tier
+  SDO_MAPS_Visit_Frequency__c              (double         ) - Visit Frequency
+  SDO_Number_Leads_Active__c               (double         ) - Active Leads
+  SDO_Number_Leads_Converted__c            (double         ) - Converted Leads
+  SDO_Number_Open_Opportunities__c         (double         ) - Open Opportunities
+  SDO_Operating_Hours__c                   (reference      ) - Operating Hours
+  SDO_PA_Inclusive_Preferred_Name__pc      (string         ) - Preferred Name
+  SDO_PA_Inclusive_Pronouns__pc            (picklist       ) - Preferred Pronoun
+  SDO_PA_Inclusive_TDD_TTY__pc             (boolean        ) - TDD / TTY Required [REQUIRED]
+  SDO_PA_Preferred_Contact_Channel__pc     (picklist       ) - Preferred Contact Channel
+  SDO_PA_Year_of_Birth__pc                 (picklist       ) - Year of Birth
+  SDO_Partner_Certification__c             (picklist       ) - Partner Certification
+  SDO_Partner_Geographic_Coverage__c       (multipicklist  ) - Partner Geographic Coverage
+  SDO_Partner_Program_Level__c             (picklist       ) - Partner Program Level
+  SDO_Partner_Type__c                      (picklist       ) - Partner Type
+  SDO_Partnership_Status__c                (picklist       ) - Partnership Status
+  SDO_Sales_Current_Year_Revenue_Goal__c   (currency       ) - Current Year Revenue Goal
+  SDO_Sales_Num_Closed_Lost_Opportunities__c (double         ) - Lost Opportunities
+  SDO_Sales_Num_Closed_Won_Opportunities__c (double         ) - Won Opportunities
+  SDO_Sales_Number_Closed_Opportunities__c (double         ) - Closed Opportunities
+  SDO_Sales_Number_Leads_Total__c          (double         ) - Total Leads
+  SDO_Sales_Region__c                      (picklist       ) - Region
+  SDO_Sales_Value_Closed_Won_Opportunties__c (currency       ) - Value Closed Won Opportunities
+  Sdo_Scom_Default_Store__c                (reference      ) - Default Store
+  SDO_SCOM_OOA_Access__pc                  (picklist       ) - B2B Access
+  SDO_SCOM_OOA_Approver__pc                (reference      ) - B2B Approver
+  SDO_SCOM_OOA_Budget_Limit__pc            (currency       ) - B2B Budget Limit
+  SDO_Service_Customer_Satisfaction_Index__c (picklist       ) - Customer Satisfaction Index
+  SDO_Service_Month_of_Birth__pc           (picklist       ) - Month of Birth
+  SDO_Service_Primary_Messaging_User__pc   (reference      ) - Primary Messaging User
+  SDO_Service_SMS_Message__pc              (textarea       ) - SMS Message
+  SDO_SFS_Default_Field_Entitlement__c     (reference      ) - Default Field Entitlement
+  SDO_SFS_Rider_BotContext__pc             (reference      ) - Rider Context
+  SDO_SFS_Rider_Enabled__pc                (boolean        ) - Rider Enabled [REQUIRED]
+  SDO_SFS_Rider_ServiceTerritory__pc       (reference      ) - Rider Service Territory
+  SDO_SFS_Service_Territory__c             (reference      ) - Service Territory
+  SDO_SFS_ShippingGeo__Latitude__s         (double         ) - ShippingGeo (Latitude)
+  SDO_SFS_ShippingGeo__Longitude__s        (double         ) - ShippingGeo (Longitude)
+  SDO_SFS_Tracker_BotContext__pc           (reference      ) - Tracker BotContext
+  SDO_SFS_Work_Type__c                     (reference      ) - Work Type
+  SDO_SFS_Work_Type_for_Quote_Creation__c  (reference      ) - Work Type for Quote Creation
+  SDO_SPM_Billing_Country_Code__c          (string         ) - Billing Country Code
+  SDO_SPM_Hardware_Revenue__c              (double         ) - Hardware Revenue
+  SDO_SPM_Open_Opportunity_Value__c        (double         ) - Open Opportunity Value
+  SDO_SPM_Software_Revenue__c              (double         ) - Software Revenue
+  SDO_SPM_Upside_Potential__c              (double         ) - Upside Potential
+  SDO_Value__c                             (double         ) - Value
+  SDO_Value_Open_Opportunties__c           (currency       ) - Value of Open Opportunities
+  SDO_YTD_Revenue_Generated__c             (currency       ) - YTD Revenue Generated
+  ShippingCity                             (string         ) - Shipping City
+  ShippingCountry                          (string         ) - Shipping Country
+  ShippingGeocodeAccuracy                  (picklist       ) - Shipping Geocode Accuracy
+  ShippingLatitude                         (double         ) - Shipping Latitude
+  ShippingLongitude                        (double         ) - Shipping Longitude
+  ShippingPostalCode                       (string         ) - Shipping Zip/Postal Code
+  ShippingState                            (string         ) - Shipping State/Province
+  ShippingStreet                           (textarea       ) - Shipping Street
+  Sic                                      (string         ) - SIC Code
+  SicDesc                                  (string         ) - SIC Description
+  Site                                     (string         ) - Account Site
+  TickerSymbol                             (string         ) - Ticker Symbol
+  Tier__c                                  (picklist       ) - Tier
+  Type                                     (picklist       ) - Account Type
+  Value_Closed_Won_Opportunties__c         (currency       ) - Value Closed Won Opportunities
+  vlocity_cmt__AccountPaymentType__c       (picklist       ) - Account Payment Type
+  vlocity_cmt__Active__c                   (picklist       ) - Active
+  vlocity_cmt__AnnualIncome__pc            (currency       ) - Annual Income
+  vlocity_cmt__Authorized__pc              (boolean        ) - Authorized [REQUIRED]
+  vlocity_cmt__AutoPaymentAmount__c        (picklist       ) - Auto Payment Amount
+  vlocity_cmt__AutoPaymentLimitAmount__c   (currency       ) - Auto Payment Limit
+  vlocity_cmt__AutoPaymentMethodId__c      (reference      ) - Auto Payment Method
+  vlocity_cmt__BillCycle__c                (picklist       ) - Bill Cycle
+  vlocity_cmt__BillDeliveryMethod__c       (picklist       ) - Bill Delivery Method
+  vlocity_cmt__BillFormat__c               (picklist       ) - Bill Format
+  vlocity_cmt__BillFrequency__c            (picklist       ) - Bill Frequency
+  vlocity_cmt__BillingAccountStatus__c     (picklist       ) - Billing Account Status
+  vlocity_cmt__BillingEmailAddress__c      (email          ) - Billing eMail Address
+  vlocity_cmt__BillNumberOfCopies__c       (double         ) - Number of Bill Copies
+  vlocity_cmt__Churn__c                    (double         ) - Churn
+  vlocity_cmt__CLTV__c                     (currency       ) - CLTV
+  vlocity_cmt__ContactNumber__pc           (string         ) - Contact Number
+  vlocity_cmt__ContactPreferences__c       (multipicklist  ) - Contact Preferences
+  vlocity_cmt__CreditRating__c             (string         ) - Credit Rating
+  vlocity_cmt__CreditScore__c              (double         ) - Credit Score
+  vlocity_cmt__CustomerClass__c            (picklist       ) - Customer Class
+  vlocity_cmt__CustomerOfBrand__c          (picklist       ) - Customer Of
+  vlocity_cmt__CustomerPriority__c         (picklist       ) - Customer Priority
+  vlocity_cmt__CustomerSentiment__pc       (picklist       ) - Customer Sentiment
+  vlocity_cmt__CustomerSinceDate__c        (date           ) - Customer Since Date
+  vlocity_cmt__CustomerValue__c            (picklist       ) - Customer Value
+  vlocity_cmt__DateFounded__c              (date           ) - Date Founded
+  vlocity_cmt__DirectoryListed__c          (boolean        ) - Directory Listed [REQUIRED]
+  vlocity_cmt__Disclosure1__c              (boolean        ) - Foreign Exchange [REQUIRED]
+  vlocity_cmt__Disclosure2__c              (boolean        ) - Gaming or Gambling [REQUIRED]
+  vlocity_cmt__Disclosure3__c              (boolean        ) - Money Lending/Pawning [REQUIRED]
+  vlocity_cmt__DriversLicenseNumber__pc    (string         ) - Driver's License Number
+  vlocity_cmt__EmploymentStatus__pc        (picklist       ) - Employment Status
+  vlocity_cmt__EnableAutopay__c            (boolean        ) - Enable Autopay [REQUIRED]
+  vlocity_cmt__FraudReason__c              (textarea       ) - Fraud Reason
+  vlocity_cmt__Gender__pc                  (picklist       ) - Gender
+  vlocity_cmt__HasFraud__c                 (boolean        ) - Fraud [REQUIRED]
+  vlocity_cmt__HasFraud__pc                (boolean        ) - Fraud [REQUIRED]
+  vlocity_cmt__Image__pc                   (textarea       ) - Image
+  vlocity_cmt__IsActive__pc                (boolean        ) - Active [REQUIRED]
+  vlocity_cmt__IsEmployee__pc              (boolean        ) - Employee [REQUIRED]
+  vlocity_cmt__IsPartner__pc               (boolean        ) - Partner [REQUIRED]
+  vlocity_cmt__IsPersonAccount__c          (boolean        ) - Is Person Account [REQUIRED]
+  vlocity_cmt__IsPersonAccount__pc         (boolean        ) - Is Person Account [REQUIRED]
+  vlocity_cmt__IsRootResolved__c           (boolean        ) - Is Root Resolved [REQUIRED]
+  vlocity_cmt__Juridsiction1__c            (picklist       ) - Account Jurisdiction 1
+  vlocity_cmt__Jurisdiction2__c            (picklist       ) - Account Jurisdiction 2
+  vlocity_cmt__LastContactbyRecordOwner__pc (date           ) - Last Contact by Record Owner
+  vlocity_cmt__LegalForm__c                (picklist       ) - Legal Form
+  vlocity_cmt__Location__pc                (string         ) - Region
+  vlocity_cmt__MiddleName__pc              (string         ) - Middle Name
+  vlocity_cmt__NetWorth__c                 (currency       ) - Net Worth
+  vlocity_cmt__NetWorth__pc                (currency       ) - Net Worth
+  vlocity_cmt__NumberofLocations__c        (double         ) - Number of Locations
+  vlocity_cmt__Occupation__pc              (string         ) - Occupation
+  vlocity_cmt__PartyId__c                  (reference      ) - Party
+  vlocity_cmt__PartyId__pc                 (reference      ) - Party
+  vlocity_cmt__PersonContactId__c          (reference      ) - Person Contact Id
+  vlocity_cmt__PreferredLanguage__c        (string         ) - Preferred Language
+  vlocity_cmt__PremisesId__c               (reference      ) - Premises
+  vlocity_cmt__PrepayReloadThreshold__c    (currency       ) - Prepay Reload Threshold
+  vlocity_cmt__PrimaryContactId__c         (reference      ) - Contact
+  vlocity_cmt__PrimaryEmployerId__pc       (reference      ) - Employer
+  vlocity_cmt__ReferredByContactId__c      (reference      ) - Referred By
+  vlocity_cmt__RootAccountId__c            (reference      ) - Root Account
+  vlocity_cmt__SLA__c                      (picklist       ) - SLA
+  vlocity_cmt__SocialSecurityNumber__pc    (encryptedstring) - Social Security Number
+  vlocity_cmt__SSN__pc                     (string         ) - SSN
+  vlocity_cmt__StateOfIssuance__pc         (picklist       ) - State of Issuance
+  vlocity_cmt__Status__c                   (picklist       ) - Status
+  vlocity_cmt__Status__pc                  (picklist       ) - Status
+  vlocity_cmt__TaxExemptionEndDate__c      (datetime       ) - Tax Exemption End
+  vlocity_cmt__TaxExemptionPercentage__c   (percent        ) - Tax Exemption Percentage
+  vlocity_cmt__TaxExemptionStartDate__c    (datetime       ) - Tax Exemption Start
+  vlocity_cmt__TaxExemptionType__c         (picklist       ) - Tax Exemption
+  vlocity_cmt__TaxID__c                    (string         ) - Tax ID
+  vlocity_cmt__TaxId__pc                   (string         ) - Tax ID
+  vlocity_cmt__Type__pc                    (picklist       ) - Type
+  vlocity_cmt__UpsellOpportunity__c        (picklist       ) - Upsell Opportunity
+  vlocity_cmt__UserId__pc                  (reference      ) - UserId
+  vlocity_cmt__UserLeaseExpires__pc        (datetime       ) - UserLeaseExpiration
+  vlocity_cmt__UserLeaseToken__pc          (string         ) - UserLeaseToken
+  vlocity_cmt__UserName__pc                (string         ) - UserName
+  vlocity_cmt__UserPass__pc                (encryptedstring) - UserPass
+  vlocity_cmt__UserPassSalt__pc            (string         ) - UserPassSalt
+  vlocity_cmt__vCustomerPriority__c        (picklist       ) - Customer Priority
+  vlocity_cmt__vSLA__c                     (picklist       ) - SLA
+  vlocity_cmt__vSLAExpirationDate__c       (date           ) - SLA Expiration Date
+  vlocity_cmt__vSLASerialNumber__c         (string         ) - SLA Serial Number
+  vlocity_cmt__WebSite__pc                 (url            ) - Web Site
+  Vlocity_Demo_Name__c                     (string         ) - Vlocity Demo Name
+  Website                                  (url            ) - Website
+
+Total creatable fields: 347
+
+================================================================================
+📋 Object: vlocity_cmt__Premises__c
+================================================================================
+
+Label: Premises
+API Name: vlocity_cmt__Premises__c
+Createable: true
+
+Creatable Fields:
+--------------------------------------------------------------------------------
+  CurrencyIsoCode                          (picklist       ) - Currency ISO Code
+  Name                                     (string         ) - Name
+  OwnerId                                  (reference      ) - Owner ID [REQUIRED]
+  vlocity_cmt__ActivationDate__c           (date           ) - Activation Date
+  vlocity_cmt__Address1__c                 (string         ) - Street Supplement 1
+  vlocity_cmt__Address2__c                 (string         ) - Street Supplement 2
+  vlocity_cmt__AlternateCity__c            (string         ) - Alternate City
+  vlocity_cmt__AlternateCountry__c         (string         ) - Alternate Country
+  vlocity_cmt__AlternatePostalCode__c      (string         ) - Alternate Postal Code
+  vlocity_cmt__AlternateState__c           (string         ) - Alternate State
+  vlocity_cmt__AlternateStreetAddress__c   (string         ) - Alternate Street Address
+  vlocity_cmt__City__c                     (string         ) - City
+  vlocity_cmt__Country__c                  (string         ) - Country
+  vlocity_cmt__DistributionArea__c         (picklist       ) - Distribution Area
+  vlocity_cmt__Floor__c                    (string         ) - Floor
+  vlocity_cmt__Geolocation__Latitude__s    (double         ) - Geolocation (Latitude)
+  vlocity_cmt__Geolocation__Longitude__s   (double         ) - Geolocation (Longitude)
+  vlocity_cmt__HouseNumberSupplement__c    (string         ) - House Number Supplement
+  vlocity_cmt__IsKeyAtPremises__c          (boolean        ) - Key at Premises [REQUIRED]
+  vlocity_cmt__IsOkToEnter__c              (boolean        ) - Ok to Enter [REQUIRED]
+  vlocity_cmt__IsSupplyGuaranteed__c       (boolean        ) - Supply Guaranteed [REQUIRED]
+  vlocity_cmt__Jurisdiction__c             (picklist       ) - Jurisdiction
+  vlocity_cmt__MeterReadInstructions__c    (textarea       ) - Meter Read Instructions
+  vlocity_cmt__MeterReadWarning__c         (string         ) - Meter Read Warning
+  vlocity_cmt__NumberOfOccupants__c        (double         ) - Number of Occupants
+  vlocity_cmt__ParentPremisesId__c         (reference      ) - Parent Premises
+  vlocity_cmt__PostalCode__c               (string         ) - Postal Code
+  vlocity_cmt__PremisesIdentifier__c       (string         ) - Premises Identifier
+  vlocity_cmt__PremisesNumber__c           (string         ) - Premises Number
+  vlocity_cmt__PremisesType__c             (picklist       ) - Premises Type
+  vlocity_cmt__PropertyOwnerAccountId__c   (reference      ) - Property Owner Account
+  vlocity_cmt__State__c                    (string         ) - State
+  vlocity_cmt__Status__c                   (picklist       ) - Status
+  vlocity_cmt__StreetAddress__c            (string         ) - Street Address
+  vlocity_cmt__SupplyGuaranteeReason__c    (picklist       ) - Supply Guarantee Reason
+  vlocity_cmt__TimeZone__c                 (picklist       ) - Time Zone
+  vlocity_cmt__TrendArea__c                (picklist       ) - Trend Area
+  vlocity_cmt__UnitNumber__c               (string         ) - Unit / Apartment
+
+Total creatable fields: 38
+
+================================================================================
+📋 Object: gtx_sales__Service_Point__c
+================================================================================
+
+Label: Service Point
+API Name: gtx_sales__Service_Point__c
+Createable: true
+
+Creatable Fields:
+--------------------------------------------------------------------------------
+  CurrencyIsoCode                          (picklist       ) - Currency ISO Code
+  gtx_sales__Annual_Consumption__c         (double         ) - Annual_Consumption
+  gtx_sales__Billing_Account_Id__c         (reference      ) - Billing Account
+  gtx_sales__Market_Identifier__c          (string         ) - Market Identifier
+  gtx_sales__Opportunity__c                (reference      ) - Opportunity
+  gtx_sales__Order_Id__c                   (reference      ) - Order
+  gtx_sales__Product_Reference__c          (string         ) - Product Reference
+  gtx_sales__Service_External_Id__c        (string         ) - Service External Id
+  gtx_sales__Service_External_Type__c      (string         ) - Service External Type
+  gtx_sales__Service_Type__c               (picklist       ) - Service Type
+  OwnerId                                  (reference      ) - Owner ID [REQUIRED]
+
+Total creatable fields: 11
+
+================================================================================
+📋 Object: Opportunity
+================================================================================
+
+Label: Opportunity
+API Name: Opportunity
+Createable: true
+
+Creatable Fields:
+--------------------------------------------------------------------------------
+  AccountId                                (reference      ) - Account ID
+  Amount                                   (currency       ) - Amount
+  analyticsdemo_batch_id__c                (string         ) - analyticsdemo_batch_id__c
+  ApprovalStatus__c                        (picklist       ) - Approval Status
+  CampaignId                               (reference      ) - Campaign ID
+  CloseDate                                (date           ) - Close Date [REQUIRED]
+  ContactId                                (reference      ) - Contact ID
+  ContractId                               (reference      ) - Contract ID
+  CurrencyIsoCode                          (picklist       ) - Opportunity Currency
+  DateTimeCreated__c                       (datetime       ) - Created Date
+  DB_Amount__c                             (currency       ) - DB Amount
+  DB_Days__c                               (double         ) - DB Days
+  db_days_CloseDate__c                     (double         ) - CloseDate db days
+  Description                              (textarea       ) - Description
+  ED_Leading_Causes__c                     (textarea       ) - ED Leading Causes
+  ED_Outcome__c                            (double         ) - ED Predicted Time to Close
+  ED_Prescription__c                       (textarea       ) - ED Prescription
+  Exec_Meeting__c                          (boolean        ) - Executive Meeting [REQUIRED]
+  External_ID__c                           (string         ) - External ID
+  ForecastCategoryName                     (picklist       ) - Forecast Category
+  Interactive_Demo__c                      (boolean        ) - Interactive Demo [REQUIRED]
+  IsExcludedFromTerritory2Filter           (boolean        ) - Exclude from the territory assignment filter logic [REQUIRED]
+  IsPrivate                                (boolean        ) - Private [REQUIRED]
+  LastActivityDate__c                      (date           ) - Last Activity
+  LastModifiedDate__c                      (datetime       ) - Last Modified Date
+  LeadSource                               (picklist       ) - Lead Source
+  Name                                     (string         ) - Name [REQUIRED]
+  NextStep                                 (string         ) - Next Step
+  OwnerId                                  (reference      ) - Owner ID [REQUIRED]
+  Pricebook2Id                             (reference      ) - Price Book ID
+  Probability                              (percent        ) - Probability (%)
+  ProbabilityOfInfluence__c                (percent        ) - ProbabilityOfInfluence
+  Products__c                              (multipicklist  ) - Product
+  ProjectDescription__c                    (textarea       ) - ProjectDescription
+  ProjectEndDate__c                        (string         ) - ProjectEndDate
+  ProjectGoals__c                          (textarea       ) - ProjectGoals
+  ProjectStage__c                          (string         ) - ProjectStage
+  ProjectStartDate__c                      (string         ) - ProjectStartDate
+  RecordTypeId                             (reference      ) - Record Type ID
+  sbaa__ApprovalStatus__c                  (picklist       ) - Approval Status
+  sbaa__ApprovalStep__c                    (double         ) - Approval Step
+  sbaa__Approver__c                        (reference      ) - Approver
+  sbaa__StepApproved__c                    (boolean        ) - Step Approved [REQUIRED]
+  sbaa__SubmittedDate__c                   (date           ) - Submitted Date
+  sbaa__SubmittedUser__c                   (reference      ) - Submitted User
+  SBQQ__AmendedContract__c                 (reference      ) - Amended Contract
+  SBQQ__Contracted__c                      (boolean        ) - Contracted [REQUIRED]
+  SBQQ__CreateContractedPrices__c          (boolean        ) - Create Contracted Prices [REQUIRED]
+  SBQQ__Ordered__c                         (boolean        ) - Ordered [REQUIRED]
+  SBQQ__OrderGroupID__c                    (string         ) - Order Group ID
+  SBQQ__PrimaryQuote__c                    (reference      ) - Primary Quote
+  SBQQ__QuotePricebookId__c                (string         ) - Quote Pricebook Id
+  SBQQ__Renewal__c                         (boolean        ) - Renewal [REQUIRED]
+  SBQQ__RenewedContract__c                 (reference      ) - Renewed Contract
+  SDO_MAPS_Dataset_Split__c                (double         ) - Opportunity Dataset Split
+  SDO_MAPS_Tag_Opportunity__c              (string         ) - Tag Opportunity
+  SDO_Pardot_Is_B2BMA_Plus_Data__c         (boolean        ) - Is B2BMA Plus Data [REQUIRED]
+  SDO_Quip_Close_Plan_Quip__c              (url            ) - Close_Plan_Quip
+  SDO_Sales_Competitor__c                  (picklist       ) - Competitor
+  SDO_Sales_Complete_ROI_Analysis__c       (boolean        ) - Complete ROI Analysis [REQUIRED]
+  SDO_Sales_Contract_Terms__c              (picklist       ) - Contract Terms
+  SDO_Sales_Discount__c                    (percent        ) - Discount %
+  SDO_Sales_Partner_Owner__c               (reference      ) - Partner Owner
+  SDO_Sales_Primary_Contact__c             (reference      ) - Primary Contact
+  SDO_Sales_Project_Budgeted__c            (boolean        ) - Project Budgeted? [REQUIRED]
+  SDO_Sales_Project_Manager_Contact__c     (reference      ) - Project Manager Contact
+  SDO_Sales_Reason_Lost__c                 (picklist       ) - Reason Lost
+  SDO_Sales_Stalled_Opportunity__c         (boolean        ) - Stalled Opportunity [REQUIRED]
+  SDO_Sales_Winning_Competitor__c          (picklist       ) - Winning Competitor
+  SDO_Service_Case__c                      (reference      ) - Case
+  SDO_SFS_Work_Order__c                    (reference      ) - Work Order
+  SourceId                                 (reference      ) - Source ID
+  StageName                                (picklist       ) - Stage [REQUIRED]
+  SyncedQuoteId                            (reference      ) - Quote ID
+  Territory2Id                             (reference      ) - Territory ID
+  TotalOpportunityQuantity                 (double         ) - Quantity
+  Type                                     (picklist       ) - Opportunity Type
+  VDO_Building_Data__c                     (textarea       ) - VDO Building Data
+  VDO_Competitors__c                       (textarea       ) - VDO_Competitors
+  VDO_Dashboard__c                         (boolean        ) - VDO Dashboard [REQUIRED]
+  VDO_Equipment_Data__c                    (textarea       ) - VDO Equipment Data
+  VDO_Hourly_Demand__c                     (textarea       ) - VDO Hourly Demand
+  Vdo_Included_meters__c                   (textarea       ) - Vdo_Included_meters
+  VDO_Included_Regions__c                  (textarea       ) - VDO_Included_Regions
+  VDO_Technical_Data__c                    (textarea       ) - VDO Technical Data
+  VDO_Volume_Calculations__c               (textarea       ) - VDO Volume Calculations
+  VDOPriceChildItems__c                    (boolean        ) - VDOPriceChildItems [REQUIRED]
+  vlocity_cmt__AsyncJobId__c               (string         ) - Async Job
+  vlocity_cmt__AsyncOperation__c           (picklist       ) - Async Operation
+  vlocity_cmt__BudgetAmount__c             (currency       ) - Budget Amount
+  vlocity_cmt__DefaultCurrencyPaymentMode__c (picklist       ) - Default Currency Payment Mode
+  vlocity_cmt__EffectiveBaseOneTimeCharge__c (currency       ) - Effective Total: Base One Time Charges
+  vlocity_cmt__EffectiveBaseRecurringCharge__c (currency       ) - Effective Total: Base Recurring Charges
+  vlocity_cmt__EffectiveOneTimeCostTotal__c (currency       ) - Effective Total: One Time Costs
+  vlocity_cmt__EffectiveOneTimeLoyaltyTotal__c (double         ) - Effective Total: One Time Loyalty
+  vlocity_cmt__EffectiveRecurringCostTotal__c (currency       ) - Effective Total: Recurring Costs
+  vlocity_cmt__EffectiveUsageCostTotal__c  (currency       ) - Usage Cost Total
+  vlocity_cmt__EffectiveUsagePriceTotal__c (currency       ) - Usage Price Total
+  vlocity_cmt__Email__c                    (email          ) - Email
+  vlocity_cmt__Fax__c                      (phone          ) - Fax
+  vlocity_cmt__FollowUpTo__c               (string         ) - Follow Up To
+  vlocity_cmt__FrameContractId__c          (reference      ) - Frame Contract
+  vlocity_cmt__IsContractRequired__c       (boolean        ) - Require Contract [REQUIRED]
+  vlocity_cmt__LockedBy__c                 (reference      ) - Locked By User
+  vlocity_cmt__LockedFor__c                (picklist       ) - Locked For
+  vlocity_cmt__NumberOfContractedMonths__c (double         ) - Number Of Contracted Months
+  vlocity_cmt__OneTimeLoyaltyTotal__c      (double         ) - One Time Loyalty Total
+  vlocity_cmt__OneTimeMarginTotal__c       (percent        ) - One Time Margin Total
+  vlocity_cmt__OpportunityMarginTotal__c   (percent        ) - Opportunity Margin Total
+  vlocity_cmt__OrderNumber__c              (string         ) - Order Number
+  vlocity_cmt__OriginatingChannel__c       (picklist       ) - Originating Channel
+  vlocity_cmt__OriginatingContractId__c    (reference      ) - Originating Contract
+  vlocity_cmt__PartyId__c                  (reference      ) - Referral Source
+  vlocity_cmt__Phone__c                    (phone          ) - Phone
+  vlocity_cmt__PriceListId__c              (reference      ) - Price List
+  vlocity_cmt__RecurringMarginTotal__c     (percent        ) - Recurring Margin Total
+  vlocity_cmt__TrackingNumber__c           (string         ) - Tracking Number
+  vlocity_cmt__UsageMarginTotal__c         (percent        ) - Usage Margin Total
+  vlocity_cmt__ValidationDate__c           (datetime       ) - Validation Date
+  vlocity_cmt__ValidationMessage__c        (textarea       ) - Validation Message
+  vlocity_cmt__ValidationStatus__c         (picklist       ) - Validation Status
+
+Total creatable fields: 121

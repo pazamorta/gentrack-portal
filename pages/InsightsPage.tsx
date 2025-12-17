@@ -60,3 +60,4 @@ export const InsightsPage: React.FC = () => {
   );
 };
 
+

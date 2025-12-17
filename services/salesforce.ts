@@ -1,3 +1,4 @@
+// Secure browser-compatible Salesforce service using backend proxy
 export interface MeterPoint {
     mpan: string;
     meterNumber: string;
@@ -15,11 +16,20 @@ export interface BillingAccount {
     invoices: string[]; // Invoice IDs
 }
 
+export interface Contact {
+    firstName?: string;
+    lastName: string;
+    email?: string;
+    phone?: string;
+    salesforceId?: string;
+}
+
 export interface SalesforceAccount {
     name: string;
     companyNumber: string;
     billingAccounts: BillingAccount[];
     sites: Site[];
+    salesforceId?: string;
 }
 
 export interface Opportunity {
@@ -27,6 +37,7 @@ export interface Opportunity {
     stage: string;
     amount?: number;
     closeDate: string;
+    salesforceId?: string;
 }
 
 export interface ParsedInvoiceData {
@@ -35,8 +46,24 @@ export interface ParsedInvoiceData {
     accountNumber?: string;
     invoiceNumber?: string;
     totalAmount?: number;
+    totalConsumption?: number; // in MWh
     invoiceDate?: string;
+    contactFirstName?: string;
+    contactLastName?: string;
+    contactEmail?: string;
+    contactPhone?: string;
     sites: Site[];
+    fileContent?: string; // Base64 encoded content
+    fileName?: string;
+    
+    // Additional fields for full conversion
+    leadId?: string;
+    industry?: string;
+    companySize?: string;
+    useCase?: string;
+    timeline?: string;
+    budget?: string;
+    portfolioSize?: string;
 }
 
 export interface SuccessResponse {
@@ -44,47 +71,116 @@ export interface SuccessResponse {
     message: string;
     createdRecords: {
         account: SalesforceAccount;
+        contact?: Contact;
         opportunity: Opportunity;
     };
 }
 
+// Backend API URL - configurable via environment variable
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 export const salesforceService = {
-    createRecordsFromInvoice: async (data: ParsedInvoiceData): Promise<SuccessResponse> => {
-        console.log('Creating Salesforce records from invoice data:', data);
+    /**
+     * Create a Lead in Salesforce
+     */
+    createLead: async (data: any): Promise<{ success: boolean; leadId?: string; message?: string }> => {
+        try {
+            const response = await fetch(`${API_URL}/api/salesforce/lead`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
 
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                throw new Error(errorData.error || `Server error: ${response.status}`);
+            }
 
-        // content
-        const account: SalesforceAccount = {
-            name: data.companyName,
-            companyNumber: data.companyNumber || 'UNKNOWN',
-            billingAccounts: [
-                {
-                    accountNumber: data.accountNumber || 'NEW-ACC-' + Math.floor(Math.random() * 10000),
-                    invoices: data.invoiceNumber ? [data.invoiceNumber] : [],
-                },
-            ],
-            sites: data.sites,
-        };
-
-        const opportunity: Opportunity = {
-            name: `${data.companyName} - New Energy Contract`,
-            stage: 'Prospecting',
-            amount: data.totalAmount,
-            closeDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
-        };
-
-        console.log('CREATED RECORD: Account', account);
-        console.log('CREATED RECORD: Opportunity', opportunity);
-
-        return {
-            success: true,
-            message: 'Successfully created Account, Billing Account, Site, and Opportunity records in Salesforce.',
-            createdRecords: {
-                account,
-                opportunity,
-            },
-        };
+            return await response.json();
+        } catch (error) {
+            console.error('❌ Create Lead error:', error);
+            throw error;
+        }
     },
+
+    /**
+     * Create Salesforce records from invoice data via backend proxy
+     * This keeps credentials secure on the server
+     */
+    createRecordsFromInvoice: async (data: ParsedInvoiceData): Promise<SuccessResponse> => {
+        console.log('Creating Salesforce records via backend proxy:', data.companyName);
+
+        try {
+            const response = await fetch(`${API_URL}/api/salesforce/invoice`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                throw new Error(errorData.error || `Server error: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to create Salesforce records');
+            }
+
+            console.log('✅ Successfully created Salesforce records via backend');
+            return result;
+
+        } catch (error) {
+            console.error('❌ Salesforce integration error:', error);
+            
+            // Provide helpful error messages
+            if (error instanceof TypeError && error.message.includes('fetch')) {
+                throw new Error('Cannot connect to backend server. Please ensure the server is running on ' + API_URL);
+            }
+            
+            throw new Error(`Salesforce error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    },
+
+    /**
+     * Execute a SOQL query via backend proxy (for debugging/testing)
+     */
+    query: async (soql: string): Promise<any> => {
+        try {
+            const response = await fetch(`${API_URL}/api/salesforce/query`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ soql }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                throw new Error(errorData.error || `Server error: ${response.status}`);
+            }
+
+            return response.json();
+
+        } catch (error) {
+            console.error('Query error:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Health check to verify backend is running
+     */
+    healthCheck: async (): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_URL}/api/health`);
+            return response.ok;
+        } catch (error) {
+            console.error('Backend health check failed:', error);
+            return false;
+        }
+    }
 };

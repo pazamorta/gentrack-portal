@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ArrowUp, Mic, Square, Loader2, Volume2, Paperclip, FileText, X, Minimize2 } from "lucide-react";
-import { GoogleGenAI, Modality } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
 import { salesforceService, ParsedInvoiceData } from '../services/salesforce';
+import { aiService } from '../services/ai';
 
 // --- Types ---
 
@@ -96,18 +96,7 @@ export const ChatInterface: React.FC = () => {
     }
   }, [showQuickQuestions]);
 
-  // Get API key from environment
-  // Vite injects process.env.API_KEY from GEMINI_API_KEY env variable
-  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-  
-  // Validate API key
-  if (!apiKey || apiKey === 'undefined' || apiKey.trim() === '') {
-    console.error('GEMINI_API_KEY is not set. Please create a .env.local file with GEMINI_API_KEY=your_api_key');
-  }
 
-  // Initialize GenAI
-  // Ideally this should be outside or memoized, but for this snippet it's okay.
-  const ai = apiKey && apiKey !== 'undefined' ? new GoogleGenAI({ apiKey }) : null;
 
   const SITE_CONTEXT = `
     You are Oxygen AI, the intelligent assistant for the Oxygen energy platform (powered by Gentrack).
@@ -153,8 +142,6 @@ export const ChatInterface: React.FC = () => {
   };
 
   const generateFollowUpQuestions = async (originalQuestion: string, answer: string) => {
-    if (!ai) return;
-
     try {
       const prompt = `Based on this question and answer about energy operations, generate exactly 4 short, succinct follow-up questions (max 6-8 words each). Make them concise, specific, and actionable.
 
@@ -163,9 +150,9 @@ Answer: "${answer}"
 
 Return only the 4 questions, one per line, without numbering or bullets. Keep each question brief and to the point.`;
 
-      const result = await ai.models.generateContent({
+      const result = await aiService.generateContent({
         model: "gemini-2.5-flash",
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        prompt: prompt
       });
 
       const questionsText = result.text || "";
@@ -208,7 +195,6 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
   };
 
   const processInvoiceForQuote = async (file: File) => {
-    if (!ai) return;
     
     // Add user message about uploading invoice
     const userMessage: ChatMessage = {
@@ -261,17 +247,13 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
         ensure valid JSON.
       `;
 
-      const result = await ai.models.generateContent({
+      const result = await aiService.generateContent({
         model: "gemini-2.5-flash",
-        contents: [
-            {
-                role: "user",
-                parts: [
-                    { inlineData: { mimeType: file.type, data: base64 } },
-                    { text: prompt }
-                ]
-            }
-        ]
+        prompt: prompt,
+        image: {
+            mimeType: file.type,
+            data: base64
+        }
       });
 
       const text = result.text || "";
@@ -348,12 +330,6 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
         return;
     }
 
-    // Check if API key is configured
-    if (!ai) {
-      setResponse("Error: API key not configured. Please set GEMINI_API_KEY in your .env.local file.");
-      return;
-    }
-
     // Add user message to chat history
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -376,12 +352,10 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
 
     try {
       // 1. Generate Text Response
-      const result = await ai.models.generateContent({
+      const result = await aiService.generateContent({
         model: "gemini-2.5-flash",
-        config: {
-          systemInstruction: SITE_CONTEXT,
-        },
-        contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+        systemInstruction: SITE_CONTEXT,
+        prompt: userPrompt
       });
 
       const textResponse = result.text || "I couldn't generate a response.";
@@ -421,24 +395,16 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
   };
 
   const speakResponse = async (text: string) => {
-    // Check if API key is configured
-    if (!ai) {
-      console.warn('API key not configured, skipping TTS');
-      return;
-    }
-
     try {
       setIsPlaying(true);
-      const ttsResult = await ai.models.generateContent({
+      const ttsResult = await aiService.generateContent({
         model: "gemini-2.5-flash-preview-tts",
-        contents: [{ parts: [{ text: text }] }],
-        config: {
-          responseModalities: [Modality.AUDIO],
-          speechConfig: {
+        prompt: text,
+        responseModalities: ['AUDIO'],
+        speechConfig: {
             voiceConfig: {
               prebuiltVoiceConfig: { voiceName: "Kore" },
             },
-          },
         },
       });
 
@@ -500,13 +466,6 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
         };
 
         mediaRecorderRef.current.onstop = async () => {
-          // Check if API key is configured
-          if (!ai) {
-            setResponse("Error: API key not configured. Please set GEMINI_API_KEY in your .env.local file.");
-            setIsRecording(false);
-            return;
-          }
-
           setIsLoading(true);
           const audioBlob = new Blob(audioChunksRef.current, {
             type: "audio/webm",
@@ -515,25 +474,14 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
 
           try {
             // Send audio to Gemini
-            const result = await ai.models.generateContent({
-              model: "gemini-2.5-flash",
-              config: {
+            const result = await aiService.generateContent({
+                model: "gemini-2.5-flash",
                 systemInstruction: SITE_CONTEXT,
-              },
-              contents: [
-                {
-                  role: "user",
-                  parts: [
-                    {
-                      inlineData: {
-                        mimeType: "audio/webm", // Adjust based on browser recording format if needed
-                        data: base64Audio,
-                      },
-                    },
-                    { text: "Please listen to this audio and respond." },
-                  ],
+                media: {
+                    mimeType: "audio/webm",
+                    data: base64Audio
                 },
-              ],
+                prompt: "Please listen to this audio and respond."
             });
 
             const textResponse = result.text || "I didn't catch that.";

@@ -16,11 +16,9 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        'process.env.API_KEY': JSON.stringify(apiKey),
-        'process.env.GEMINI_API_KEY': JSON.stringify(apiKey),
-        // Backend API URL for Salesforce proxy
-        'import.meta.env.VITE_API_URL': JSON.stringify(apiUrl),
-      },
+      'process.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL || 'http://localhost:3001'),
+      'process.env.FRONTEND_URL': JSON.stringify(env.FRONTEND_URL || 'http://localhost:3000'),
+    },
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),

@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { GoogleGenAI } from "@google/genai";
 
 dotenv.config({ path: '.env.local' });
 
@@ -664,8 +665,87 @@ app.use((err, req, res, next) => {
     });
 });
 
+// AI Proxy Endpoint
+app.post('/api/ai/generate', async (req, res) => {
+    try {
+        const { prompt, image, media, model = "gemini-2.5-flash", systemInstruction, responseModalities, speechConfig } = req.body;
+        const apiKey = process.env.GEMINI_API_KEY;
+
+        if (!apiKey) {
+            console.error('❌ GEMINI_API_KEY is not set in environment variables.');
+            return res.status(500).json({ error: 'Server misconfiguration: GEMINI_API_KEY missing' });
+        }
+
+        const genAI = new GoogleGenAI({ apiKey });
+        
+        const parts = [];
+
+        // Handle Media Input (Base64) - supports image or audio
+        const mediaInput = media || image; // Support both naming conventions
+        if (mediaInput) {
+             if (mediaInput.mimeType && mediaInput.data) {
+                parts.push({ 
+                    inlineData: { 
+                        mimeType: mediaInput.mimeType, 
+                        data: mediaInput.data 
+                    } 
+                });
+            }
+        }
+        
+        // Handle Text Prompt
+        if (prompt) {
+            parts.push({ text: prompt });
+        }
+
+        const contents = [{ role: 'user', parts }];
+
+        const generateOptions = {
+            model: model,
+            contents: contents,
+            config: {} // Initialize config
+        };
+
+        if (systemInstruction) {
+            generateOptions.config.systemInstruction = systemInstruction;
+        }
+        
+        // Support TTS specific configs
+        if (responseModalities) {
+            generateOptions.config.responseModalities = responseModalities;
+        }
+        if (speechConfig) {
+            generateOptions.config.speechConfig = speechConfig;
+        }
+
+        console.log(`🤖 AI Request: ${model} | Media: ${!!mediaInput}`);
+
+        const result = await genAI.models.generateContent(generateOptions);
+        
+        // Extract text safely
+        let text = "";
+        try {
+            text = result.text ? result.text() : "";
+        } catch (e) {
+            // TTS models might not return text in the standard way, ignore error
+        }
+
+        // Return full candidates to support Audio/Binary extraction on frontend
+        // We serialize the response to JSON
+        res.json({ 
+            text,
+            candidates: result.response.candidates 
+        });
+
+    } catch (error) {
+        console.error('❌ AI Proxy Error:', error);
+        res.status(500).json({ error: error.message || 'Failed to generate content' });
+    }
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`🚀 Salesforce proxy server running on http://localhost:${PORT}`);
     console.log(`📡 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
 });
+

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Loader2, CheckCircle, AlertCircle, FileText, Check } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
 import { ParsedInvoiceData } from '../services/salesforce';
+import { aiService } from '../services/ai';
 
 interface InvoiceUploaderProps {
     onDataParsed: (data: ParsedInvoiceData) => void;
@@ -17,17 +17,10 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed, 
     const [success, setSuccess] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-
     const processFile = async (file: File) => {
         if (!gdprConsent) {
             setError("Please accept the GDPR and Privacy Policy before uploading.");
             onGdprError?.();
-            return;
-        }
-
-        if (!apiKey) {
-            setError("Gemini API Key is missing.");
             return;
         }
 
@@ -36,8 +29,6 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed, 
         setSuccess(false);
 
         try {
-            const ai = new GoogleGenAI({ apiKey });
-
             // Convert file to base64
             const base64 = await new Promise<string>((resolve, reject) => {
                 const reader = new FileReader();
@@ -78,22 +69,13 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed, 
         Ensure the output is valid JSON only, no markdown formatting.
       `;
 
-            const result = await ai.models.generateContent({
+            const result = await aiService.generateContent({
                 model: "gemini-2.5-flash",
-                contents: [
-                    {
-                        role: "user",
-                        parts: [
-                            {
-                                inlineData: {
-                                    mimeType: file.type,
-                                    data: base64
-                                }
-                            },
-                            { text: prompt }
-                        ]
-                    }
-                ]
+                prompt: prompt,
+                image: {
+                    mimeType: file.type,
+                    data: base64
+                }
             });
 
             const text = result.text || "";
@@ -110,9 +92,9 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed, 
             onDataParsed(data);
             setSuccess(true);
 
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error processing invoice:", err);
-            setError("Failed to process the invoice. Please try again or enter details manually.");
+            setError(err.message || "Failed to process the invoice. Please try again or enter details manually.");
         } finally {
             setIsProcessing(false);
         }

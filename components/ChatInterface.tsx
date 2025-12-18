@@ -323,6 +323,7 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
       setChatHistory(prev => [...prev, assistantMessage]);
       
       setResponse(responseMsg);
+      setIsLoading(false);
       await speakResponse(`I've analyzed your invoice and created the Salesforce records. Your estimated annual price is £${estimatedCostWithUs.toLocaleString()}.`);
 
     } catch (error) {

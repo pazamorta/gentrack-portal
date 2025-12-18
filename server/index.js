@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from "@google/genai";
+import https from 'https';
+import fs from 'fs';
 
 dotenv.config({ path: '.env.local' });
 
@@ -18,6 +20,13 @@ const allowedOrigins = [
 
 // Allow Private Network Access for GitHub Pages -> Localhost
 app.use((req, res, next) => {
+    console.log(`[${req.method}] ${req.url} - Origin: ${req.headers.origin}`);
+    res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    next();
+});
+
+// Explicit OPTIONS handler for preflight transparency
+app.options('*', (req, res, next) => {
     res.setHeader('Access-Control-Allow-Private-Network', 'true');
     next();
 });
@@ -853,8 +862,13 @@ app.post('/api/ai/generate', async (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`🚀 Salesforce proxy server running on http://localhost:${PORT}`);
+const httpsOptions = {
+    key: fs.readFileSync('server/key.pem'),
+    cert: fs.readFileSync('server/cert.pem')
+};
+
+https.createServer(httpsOptions, app).listen(PORT, () => {
+    console.log(`🚀 Salesforce proxy server running on https://localhost:${PORT}`);
     console.log(`📡 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
 });
 

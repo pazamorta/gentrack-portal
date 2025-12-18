@@ -92,7 +92,7 @@ export interface SuccessResponse {
 }
 
 // Backend API URL - configurable via environment variable
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:3001';
 
 export const salesforceService = {
     /**

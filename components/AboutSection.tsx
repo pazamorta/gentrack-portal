@@ -2,16 +2,16 @@ import React from 'react';
 
 const aboutCards = [
   {
-    title: "Partnering with leading utilities",
-    desc: "Partnering with leading utilities worldwide to reshape and renew the industry for a more sustainable future.",
+    title: "Partnering with Business",
+    desc: "We work with leading enterprises worldwide to reshape their energy strategy for a more sustainable future.",
   },
   {
-    title: "Cross-functional teams",
-    desc: "Cross-functional teams combining deep utilities expertise with modern product, cloud and data engineering capabilities.",
+    title: "Dedicated Account Teams",
+    desc: "Your business gets specific energy experts. Real humans who understand your industry and your goals.",
   },
   {
-    title: "A global company",
-    desc: "A global company built on long-term partnerships, innovation ecosystems and trusted delivery across three continents.",
+    title: "Global Reach, Local Supply",
+    desc: "A global energy major with deep local roots. We deliver reliable supply across three continents.",
   },
 ];
 
@@ -21,7 +21,7 @@ export const AboutSection: React.FC = () => {
       <div className="max-w-6xl mx-auto">
         <div className="mb-16">
           <h2 className="text-3xl md:text-5xl font-display font-medium mb-4">
-            About
+            About Us
           </h2>
         </div>
 

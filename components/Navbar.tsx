@@ -5,11 +5,11 @@ import { Button } from './Button';
 
 const navLinks = [
   { label: 'AI Assistant', href: '/#ai-assistant', isHash: true },
-  { label: 'Energy Domains', href: '/energy-domains', isHash: false },
-  { label: 'Solutions', href: '/solutions', isHash: false },
-  { label: 'Platform', href: '/platform', isHash: false },
-  { label: 'Insights', href: '/insights', isHash: false },
-  { label: 'About', href: '/about', isHash: false },
+  { label: 'Commercial Energy', href: '/energy-domains', isHash: false },
+  { label: 'Services', href: '/solutions', isHash: false },
+  { label: 'Sustainability', href: '/platform', isHash: false },
+  { label: 'Bill Analytics', href: '/insights', isHash: false },
+  { label: 'About Us', href: '/about', isHash: false },
 ];
 
 export const Navbar: React.FC = () => {
@@ -97,7 +97,7 @@ export const Navbar: React.FC = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-4">
-            <Button variant="primary" className="px-6 py-2 text-sm">Access Portal</Button>
+            <Button variant="primary" className="px-6 py-2 text-sm">Customer Login</Button>
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -145,7 +145,7 @@ export const Navbar: React.FC = () => {
             )
           ))}
           <div className="h-px bg-white/10 my-2"></div>
-          <Button variant="primary" className="w-full justify-center">Access Portal</Button>
+          <Button variant="primary" className="w-full justify-center">Customer Login</Button>
         </div>
       )}
     </nav>

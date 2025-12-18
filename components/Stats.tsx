@@ -9,12 +9,12 @@ export const Stats: React.FC = () => {
             <div className="text-secondary">Always On, Always Reliable</div>
         </div>
         <div className="space-y-2">
-            <div className="text-5xl md:text-6xl font-display font-bold text-white">1M+</div>
-            <div className="text-secondary">People Powered by Oxygen</div>
+            <div className="text-5xl md:text-6xl font-display font-bold text-white">50k+</div>
+            <div className="text-secondary">Businesses Powered</div>
         </div>
         <div className="space-y-2">
             <div className="text-5xl md:text-6xl font-display font-bold text-white">24/7</div>
-            <div className="text-secondary">Real Humans, Real Help</div>
+            <div className="text-secondary">Dedicated B2B Support</div>
         </div>
       </div>
     </section>

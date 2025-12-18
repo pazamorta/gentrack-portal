@@ -2,16 +2,16 @@ import React from 'react';
 
 const insightsCards = [
   {
-    title: "Business and data applications",
-    desc: "Business and data applications that turn customer, meter and financial data into real-time operational and strategic insight.",
+    title: "Usage & Spend Tracking",
+    desc: "Track your energy consumption and spend in real-time. Identify peaks and optimize your usage to reduce costs.",
   },
   {
-    title: "Dashboards and analytics",
-    desc: "Dashboards and analytics that surface revenue, risk and performance signals across portfolios, products and channels.",
+    title: "Carbon Reporting",
+    desc: "Automated Scope 2 carbon emissions reporting. Download audit-ready reports for your sustainability compliance.",
   },
   {
-    title: "Actionable insights",
-    desc: "Actionable insights that help utilities optimise processes, launch new propositions and support the energy transition.",
+    title: "Cost Savings Alerts",
+    desc: "Receive automated alerts when your consumption exceeds targets or when better rates become available.",
   },
 ];
 
@@ -21,7 +21,7 @@ export const InsightsPage: React.FC = () => {
       <div className="max-w-6xl mx-auto">
         <div className="mb-16">
           <h1 className="text-3xl md:text-5xl font-display font-medium mb-4">
-            Insights
+            Bill Analytics
           </h1>
         </div>
 

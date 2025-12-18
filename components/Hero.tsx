@@ -13,13 +13,13 @@ export const Hero: React.FC = () => {
 
         {/* Heading */}
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-bold tracking-tighter leading-[1.1] bg-clip-text text-transparent bg-gradient-to-b from-white to-white/50 animate-fade-in-up delay-100">
-          Sustainable Energy <br className="hidden md:block" />
-          for Every Scale
+          Powering Business <br className="hidden md:block" />
+          with Smart Energy
         </h1>
 
         {/* Subheading */}
         <p className="text-lg md:text-xl text-secondary max-w-2xl mx-auto leading-relaxed animate-fade-in-up delay-300">
-          Power your operations with smarter energy. Optimise in real-time, anticipate performance, and grow sustainably at every scale.
+          Secure, sustainable, and cost-effective energy supply for your enterprise. From SME to Industrial, we provide the power you need to grow.
         </p>
 
         {/* CTAs */}

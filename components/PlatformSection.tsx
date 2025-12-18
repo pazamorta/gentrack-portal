@@ -2,16 +2,16 @@ import React from 'react';
 
 const platformCards = [
   {
-    title: "Cloud-native platform",
-    desc: "Cloud-native platform designed for utilities, running natively on hyperscale cloud to deliver security, resilience and performance.",
+    title: "100% Renewable Electricity",
+    desc: "Power your business with certified green energy. Customisable products to meet your sustainability goals.",
   },
   {
-    title: "Composable architecture",
-    desc: "Composable architecture with an integration layer that connects legacy and modern systems into a single, unified ecosystem.",
+    title: "Flexible Purchasing",
+    desc: "From fixed-rate certainty to flexible wholesale purchasing. We structure contracts around your risk appetite.",
   },
   {
-    title: "Utilities best-practice library",
-    desc: "Utilities best-practice library, packaging decades of industry experience into ready-to-run processes and configurations.",
+    title: "Multi-Site Management",
+    desc: "Unified billing and reporting for complex portfolios. Manage all your meters from a single intuitive portal.",
   },
 ];
 
@@ -21,7 +21,7 @@ export const PlatformSection: React.FC = () => {
       <div className="max-w-6xl mx-auto">
         <div className="mb-16">
           <h2 className="text-3xl md:text-5xl font-display font-medium mb-4">
-            Platform
+            Commercial Energy
           </h2>
         </div>
 

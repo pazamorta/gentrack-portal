@@ -7,27 +7,27 @@ import { FeatureTab } from '../types';
 const getTabs = (): FeatureTab[] => [
   {
     id: 'water',
-    title: 'Water',
+    title: 'Water Supply',
     description:
-      'Digitise your water network with real-time monitoring, leakage insights, and demand forecasting in a single SaaS control room.',
-    cta: 'Optimise Water',
+      'Consolidated water management for large portfolios. Smart metering and efficiency services.',
+    cta: 'Get Water Quote',
     image: `${import.meta.env.BASE_URL}Spark.gif`,
   },
   {
     id: 'electricity',
     title: 'Electricity',
     description:
-      'Balance generation, grid constraints, and customer demand with AI-driven optimisation across your electricity portfolio.',
-    cta: 'Optimise Electricity',
+      'Corporate PPAs and renewable supply contracts. Direct access to wholesale markets.',
+    cta: 'View Electric Plans',
     image: `${import.meta.env.BASE_URL}Platform.gif`,
     video: `${import.meta.env.BASE_URL}Wind.mp4`,
   },
   {
     id: 'gas',
-    title: 'Gas',
+    title: 'Commercial Gas',
     description:
-      'Track gas flows, contracts, and compliance end-to-end with configurable workflows purpose-built for energy retailers.',
-    cta: 'Optimise Gas',
+      'Reliable gas supply with Green Gas options. Fixed and flexible procurement strategies.',
+    cta: 'Gas Solutions',
     image: `${import.meta.env.BASE_URL}Solutions.gif`,
   },
 ];

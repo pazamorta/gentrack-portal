@@ -323,6 +323,24 @@ app.post('/api/auth/exchange', async (req, res) => {
  * POST /api/salesforce/invoice
  */
 /**
+ * Helper to get RecordTypeId by DeveloperName
+ */
+async function getRecordTypeId(sobjectType, developerName) {
+    try {
+        const queryStr = `SELECT Id FROM RecordType WHERE SobjectType = '${sobjectType}' AND DeveloperName = '${developerName}' LIMIT 1`;
+        const result = await query(queryStr);
+        if (result.totalSize > 0) {
+            return result.records[0].Id;
+        }
+        console.warn(`⚠️ RecordType not found: ${sobjectType} - ${developerName}`);
+        return null;
+    } catch (e) {
+        console.warn(`Error fetching RecordType: ${e.message}`);
+        return null;
+    }
+}
+
+/**
  * Create a Salesforce Lead
  * POST /api/salesforce/lead
  */
@@ -330,6 +348,9 @@ app.post('/api/salesforce/lead', async (req, res) => {
     try {
         const data = req.body;
         console.log('📥 Received Lead data:', data.companyName);
+
+        // Fetch RecordTypeId for GTCX_B2B_Lead
+        const recordTypeId = await getRecordTypeId('Lead', 'GTCX_B2B_Lead');
 
         // Map form fields to Salesforce Lead fields
         const leadData = {
@@ -344,6 +365,10 @@ app.post('/api/salesforce/lead', async (req, res) => {
             Status: 'Open - Not Contacted',
             Description: `Created via Web Form. TPI: ${data.userType === 'tpi' ? 'Yes' : 'No'}`
         };
+
+        if (recordTypeId) {
+            leadData.RecordTypeId = recordTypeId;
+        }
 
         if (data.tpiIdentifier) {
             leadData.Description += `\nTPI Identifier: ${data.tpiIdentifier}`;
@@ -540,12 +565,23 @@ app.post('/api/salesforce/invoice', async (req, res) => {
         }
 
         // Handle Opportunity (Create if manual, Update if converted)
+        // Calculate Amount based on Annual Consumption * £80 (Our Rate) if available, else extrapolate
+        const estimatedAnnualConsumption = data.annualConsumption || (data.totalConsumption ? data.totalConsumption * 12 : 0);
+        const opportunityAmount = estimatedAnnualConsumption * 80;
+
+        // Fetch RecordTypeId for GTCX_B2B_Opportunity
+        const oppRecordTypeId = await getRecordTypeId('Opportunity', 'GTCX_B2B_Opportunity');
+
         const opportunityFields = {
             StageName: stageName,
-            Amount: (data.totalConsumption ? data.totalConsumption * 100 : undefined) || data.totalAmount || undefined,
+            Amount: opportunityAmount || (data.totalAmount ? data.totalAmount * 12 : undefined),
             CloseDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             Description: `Generated from Web Form.\nUse Case: ${data.useCase}\nTimeline: ${data.timeline}\nBudget: ${data.budget}\nPortfolio Size: ${data.portfolioSize}\n`
         };
+
+        if (oppRecordTypeId) {
+            opportunityFields.RecordTypeId = oppRecordTypeId;
+        }
 
         if (opportunityId) {
             // Update existing converted opportunity

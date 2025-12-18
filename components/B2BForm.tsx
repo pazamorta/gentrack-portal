@@ -240,6 +240,7 @@ export const B2BForm: React.FC = () => {
         invoiceNumber: invoiceData?.invoiceNumber,
         totalAmount: invoiceData?.totalAmount,
         totalConsumption: invoiceData?.totalConsumption,
+        annualConsumption: invoiceData?.annualConsumption,
         
         // Form fields for conversion
         leadId: formData.leadId, // This triggers conversion logic in backend

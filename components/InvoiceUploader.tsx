@@ -15,6 +15,7 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed, 
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const [lastParsedData, setLastParsedData] = useState<ParsedInvoiceData | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const processFile = async (file: File) => {
@@ -40,13 +41,14 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed, 
             const prompt = `
         Analyze this invoice image and extract the following data in strict JSON format:
         {
-          "companyName": "string (The CUSTOMER name, usually under 'Customer Details' or 'Bill To'. Do NOT use the supplier logo/name at the top)",
+          "companyName": "string (The CUSTOMER name. LOOK SPECIFICALLY under 'Customer Details' or 'Bill To'. E.g. 'CX Team'. Do NOT use the footer text or Supplier Name)",
           "companyNumber": "string (if found, otherwise empty)",
           "accountNumber": "string",
           "invoiceNumber": "string",
           "invoiceDate": "YYYY-MM-DD",
           "totalAmount": number,
-          "totalConsumption": number (total energy consumption in MWh, convert if necessary),
+          "totalConsumption": number (total energy consumption for THIS BILL PERIOD in MWh),
+          "annualConsumption": number (Yearly Total or YTD consumption in MWh. Search for 'Yearly Total', 'Annual Consumption', or 'YTD'),
           "contactFirstName": "string (contact person first name if found)",
           "contactLastName": "string (contact person last name if found)",
           "contactEmail": "string (contact email if found)",
@@ -63,13 +65,24 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed, 
               ]
             }
           ]
+          "currentRate": number,
+          "yearlySavings": number
         }
         
         IMPORTANT: 
-        1. The "companyName" is the CUSTOMER who is being billed (e.g. 'Maga Manufacturing', 'John Doe'). It is often located in a 'Customer Details' section.
-        2. Do NOT mistake the Energy Supplier (e.g. British Gas, E.ON, Gentrack, Oxygen) for the customer. The supplier logo is usually at the top or bottom.
+        1. **COMPANY NAME EXTRACTION IS CRITICAL**:
+           - Look for a box labeled "Customer Details" or "Account Details".
+           - The Company Name is the FIRST line inside that box.
+           - Example: If "Customer Details" contains "CX Team", then "CX Team" is the company name.
+           - **NEGATIVE CONSTRAINT**: Do NOT look at the footer or small print. "Megs Manufacturing Ltd" or similar is likely the billing agent/footer text - IGNORE IT.
+           
+        2. Do NOT mistake the Energy Supplier for the customer.
         3. If you find multiple sites or meters, list them all.
         4. Ensure the output is valid JSON only, no markdown formatting.
+        5. For "currentRate", calculate it as totalAmount / totalConsumption (using the CURRENT bill figures).
+        6. For "yearlySavings", calculate it as: annualConsumption * (currentRate - 80). Our rate is strictly £80/MWh.
+           - IF annualConsumption is found (e.g. "Yearly Total", "YTD"), use it.
+           - IF NOT found, estimate annualConsumption = totalConsumption * 12 (if monthly).
       `;
 
             const result = await aiService.generateContent({
@@ -93,6 +106,7 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed, 
 
             console.log("Parsed Invoice Data:", data);
             onDataParsed(data);
+            setLastParsedData(data);
             setSuccess(true);
 
         } catch (err: any) {
@@ -183,7 +197,32 @@ export const InvoiceUploader: React.FC<InvoiceUploaderProps> = ({ onDataParsed, 
                         <>
                             <CheckCircle className="w-10 h-10 text-[#00E599] mb-4" />
                             <p className="text-white font-medium">Invoice Processed Successfully</p>
+                            <p className="text-white font-medium">Invoice Processed Successfully</p>
                             <p className="text-sm text-gray-400 mt-2">We've pre-filled the form with the extracted details.</p>
+                            
+                             {/* Savings Display */}
+                             {(lastParsedData?.yearlySavings && lastParsedData.yearlySavings > 0) && (
+                                <div className="mt-4 p-4 bg-[#00E599]/10 border border-[#00E599]/30 rounded-lg w-full max-w-sm">
+                                    <p className="text-[#00E599] font-medium text-lg mb-1">
+                                        Potential Savings Found!
+                                    </p>
+                                    <div className="flex justify-between items-end">
+                                        <div>
+                                            <p className="text-sm text-gray-400">Current Rate</p>
+                                            <p className="text-white font-medium">£{lastParsedData.currentRate?.toFixed(2)}/MWh</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm text-gray-400">Est. Yearly Savings</p>
+                                            <p className="text-[#00E599] font-bold text-2xl">
+                                                £{lastParsedData.yearlySavings.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-[#00E599]/70 mt-2 text-center">
+                                        Based on our rate of £80/MWh
+                                    </p>
+                                </div>
+                            )}
                             <button
                                 onClick={() => fileInputRef.current?.click()}
                                 className="mt-4 text-sm text-[#00E599] hover:underline"

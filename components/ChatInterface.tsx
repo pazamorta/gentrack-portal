@@ -229,7 +229,9 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
           "invoiceNumber": "string",
           "invoiceDate": "YYYY-MM-DD",
           "totalAmount": number,
-          "totalConsumption": number (total energy consumption in MWh, convert if necessary),
+          "totalAmount": number,
+          "totalConsumption": number (total energy consumption for THIS BILL PERIOD in MWh),
+          "annualConsumption": number (Yearly Total or YTD consumption in MWh. Search for 'Yearly Total', 'Annual Consumption', or 'YTD'),
           "contactFirstName": "string (contact person first name if found)",
           "contactLastName": "string (contact person last name if found)",
           "contactEmail": "string (contact email if found)",
@@ -244,9 +246,18 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
             }
           ]
         }
+        }
+        }
         IMPORTANT: 
-        1. The "companyName" is the CUSTOMER who is being billed (e.g. 'Maga Manufacturing', 'John Doe'). It is often located in a 'Customer Details' section.
-        2. Do NOT mistake the Energy Supplier (e.g. British Gas, E.ON, Gentrack, Oxygen) for the customer. The supplier logo is usually at the top or bottom.
+        1. **COMPANY NAME EXTRACTION IS CRITICAL**:
+           - Look for a box labeled "Customer Details" or "Account Details".
+           - The Company Name is the FIRST line inside that box.
+           - Example: If "Customer Details" contains "CX Team", then "CX Team" is the company name.
+           - **NEGATIVE CONSTRAINT**: Do NOT look at the footer or small print. "Megs Manufacturing Ltd" is likely the billing agent or footer text - IGNORE IT unless it is in the "Customer Details" box.
+           - **NEGATIVE CONSTRAINT**: Do NOT use the Energy Supplier name (e.g. Good Energy, British Gas).
+        
+        2. For "totalConsumption", extract the total energy consumption for THIS BILL PERIOD in MWh.
+        3. For "annualConsumption", extract the Yearly Total or YTD consumption in MWh. Search for 'Yearly Total', 'Annual Consumption', or 'YTD'.
         ensure valid JSON.
       `;
 
@@ -267,24 +278,33 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
       data.fileContent = base64;
       data.fileName = file.name;
 
-      const consumption = data.totalConsumption || 0;
-      const calculatedPrice = consumption * 100; // £100 per MWh
+       // Use annual consumption if available, else annualized monthly
+       const annualConsumption = data.annualConsumption || (data.totalConsumption ? data.totalConsumption * 12 : 0);
+       
+       // Calculate current rate from the bill: Total Amount / Total Consumption
+       const currentRate = (data.totalAmount && data.totalConsumption) ? (data.totalAmount / data.totalConsumption) : 0;
+       
+       // Our rate is £80/MWh
+       const ourRate = 80;
+       
+       // Calculate costs and savings based on ANNUAL consumption
+       const estimatedCostWithUs = annualConsumption * ourRate;
+       const estimatedCurrentCost = annualConsumption * currentRate;
+       const savings = estimatedCurrentCost - estimatedCostWithUs;
+       
+       const consumptionDisplay = annualConsumption > 0 ? annualConsumption : (data.totalConsumption || 0);
 
-      setQuoteDetails({ consumption, price: calculatedPrice });
+       setQuoteDetails({ consumption: consumptionDisplay, price: estimatedCostWithUs });
 
-      // Save to Salesforce
-      const salesforceResult = await salesforceService.createRecordsFromInvoice(data);
-      const records = salesforceResult.records;
-      const instanceUrl = records?.instanceUrl || 'https://gentrack-4-dev-ed.develop.lightning.force.com';
+       // Save to Salesforce
+       const salesforceResult = await salesforceService.createRecordsFromInvoice(data);
+       const records = salesforceResult.records;
+       const instanceUrl = records?.instanceUrl || 'https://gentrack-4-dev-ed.develop.lightning.force.com';
 
-      const marketRate = 150; // £150/MWh vs our £100/MWh
-      const marketPrice = consumption * marketRate;
-      const savings = marketPrice - calculatedPrice;
-
-      const responseMsg = `Detailed Analysis for **${data.companyName}**:\n\n` +
-        `Based on your annual consumption of **${consumption.toFixed(2)} MWh**, your estimated cost with our specific rate is **£${calculatedPrice.toFixed(2)}** (at £100/MWh).\n\n` +
+       const responseMsg = `Detailed Analysis for **${data.companyName}**:\n\n` +
+        `Based on your annual consumption of **${consumptionDisplay.toLocaleString()} MWh**, your estimated cost with our specific rate is **£${estimatedCostWithUs.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}** (at £80/MWh).\n\n` +
         `📉 **Potential Savings:**\n` +
-        `Compared to the standard market rate of ~£${marketRate}/MWh, you could save approximately **£${savings.toFixed(2)} per year** by switching!\n\n` +
+        `Compared to your current rate of ~£${currentRate.toFixed(0)}/MWh, you could save approximately **£${savings.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} per year** by switching!\n\n` +
         `Would you like me to generate a formal PDF quote and email it to you?\n\n` +
         `---\n` +
         `**Salesforce Records Created:**\n` +
@@ -303,7 +323,7 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
       setChatHistory(prev => [...prev, assistantMessage]);
       
       setResponse(responseMsg);
-      await speakResponse(`I've analyzed your invoice and created the Salesforce records. Your estimated price is £${calculatedPrice.toFixed(2)}.`);
+      await speakResponse(`I've analyzed your invoice and created the Salesforce records. Your estimated annual price is £${estimatedCostWithUs.toLocaleString()}.`);
 
     } catch (error) {
         console.error("Error processing invoice:", error);

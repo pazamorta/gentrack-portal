@@ -46,7 +46,8 @@ export interface ParsedInvoiceData {
     accountNumber?: string;
     invoiceNumber?: string;
     totalAmount?: number;
-    totalConsumption?: number; // in MWh
+    totalConsumption?: number; // Current bill consumption in MWh
+    annualConsumption?: number; // Yearly/YTD consumption in MWh
     invoiceDate?: string;
     contactFirstName?: string;
     contactLastName?: string;
@@ -64,6 +65,10 @@ export interface ParsedInvoiceData {
     timeline?: string;
     budget?: string;
     portfolioSize?: string;
+    
+    // Savings analysis
+    currentRate?: number; // £/MWh
+    yearlySavings?: number; // £
 }
 
 export interface SuccessResponse {

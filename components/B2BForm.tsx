@@ -255,6 +255,7 @@ export const B2BForm: React.FC = () => {
       const response = await salesforceService.createRecordsFromInvoice(finalInvoiceData);
       if (response.success && response.records) {
         console.log(response.message);
+        console.log("Salesforce Records IDs:", response.records);
         setSubmissionSuccess(response.records);
       } else {
            alert('Submission processed, but there might be a delay in Salesforce updates.');
@@ -283,81 +284,6 @@ export const B2BForm: React.FC = () => {
                 Thank you. Your request has been successfully processed. 
                 Your lead has been converted, and the following records have been created in Salesforce.
             </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-                {submissionSuccess.accountId && (
-                    <a 
-                        href={`${submissionSuccess.instanceUrl}/lightning/r/Account/${submissionSuccess.accountId}/view`}
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="p-6 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group"
-                    >
-                        <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4 mx-auto group-hover:bg-blue-500/30 transition-colors">
-                            <Building2 className="w-6 h-6 text-blue-400" />
-                        </div>
-                        <h3 className="text-white font-medium mb-1">Account</h3>
-                        <p className="text-xs text-blue-400 flex items-center justify-center gap-1">
-                            View Record <ExternalLink className="w-3 h-3" />
-                        </p>
-                    </a>
-                )}
-
-                {submissionSuccess.contactId && (
-                    <a 
-                        href={`${submissionSuccess.instanceUrl}/lightning/r/Contact/${submissionSuccess.contactId}/view`}
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="p-6 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group"
-                    >
-                        <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mb-4 mx-auto group-hover:bg-purple-500/30 transition-colors">
-                            <Users className="w-6 h-6 text-purple-400" />
-                        </div>
-                        <h3 className="text-white font-medium mb-1">Contact</h3>
-                        <p className="text-xs text-purple-400 flex items-center justify-center gap-1">
-                            View Record <ExternalLink className="w-3 h-3" />
-                        </p>
-                    </a>
-                )}
-
-                {submissionSuccess.opportunityId && (
-                    <a 
-                        href={`${submissionSuccess.instanceUrl}/lightning/r/Opportunity/${submissionSuccess.opportunityId}/view`}
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="p-6 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group"
-                    >
-                        <div className="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center mb-4 mx-auto group-hover:bg-orange-500/30 transition-colors">
-                            <CheckCircle className="w-6 h-6 text-orange-400" />
-                        </div>
-                        <h3 className="text-white font-medium mb-1">Opportunity</h3>
-                        <p className="text-xs text-orange-400 flex items-center justify-center gap-1">
-                            View Record <ExternalLink className="w-3 h-3" />
-                        </p>
-                    </a>
-                )}
-            </div>
-
-            {submissionSuccess.servicePoints && submissionSuccess.servicePoints.length > 0 && (
-                <div className="mt-8 max-w-3xl mx-auto">
-                    <h3 className="text-white font-medium mb-4 text-center">Service Points Created ({submissionSuccess.servicePoints.length})</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {submissionSuccess.servicePoints.map((sp: any, index: number) => (
-                            <a 
-                                key={sp.id}
-                                href={`${submissionSuccess.instanceUrl}/lightning/r/GTCX_Service_Point__c/${sp.id}/view`}
-                                target="_blank" 
-                                rel="noreferrer"
-                                className="p-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all group flex items-center justify-between"
-                            >
-                                <span className="text-xs text-gray-300">
-                                    {sp.mpan || `SP ${index + 1}`}
-                                </span>
-                                <ExternalLink className="w-3 h-3 text-gray-500 group-hover:text-white transition-colors" />
-                            </a>
-                        ))}
-                    </div>
-                </div>
-            )}
 
             <div className="mt-12">
                 <button 

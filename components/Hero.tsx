@@ -5,27 +5,22 @@ import { ChatInterface } from './ChatInterface';
 
 export const Hero: React.FC = () => {
   return (
-    <section className="relative z-30 min-h-screen flex items-center justify-center px-4 pt-32 pb-20 overflow-visible">
+    <section className="relative z-30 min-h-screen flex items-center justify-center px-4 pt-16 pb-20 overflow-visible">
       <div className="max-w-5xl w-full text-center z-10 space-y-8 flex flex-col items-center">
         
         {/* Badge */}
 
 
         {/* Heading */}
-        <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-bold tracking-tighter leading-[1.1] bg-clip-text text-transparent bg-gradient-to-b from-white to-white/50 animate-fade-in-up delay-100">
+        <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-bold tracking-tighter leading-[1.1] bg-clip-text text-transparent bg-gradient-to-b from-white to-white/50 animate-fade-in-up delay-100 pb-4 px-4">
           Powering Business <br className="hidden md:block" />
           with Smart Energy
         </h1>
 
         {/* Subheading */}
-        <p className="text-lg md:text-xl text-secondary max-w-2xl mx-auto leading-relaxed animate-fade-in-up delay-300">
-          Secure, sustainable, and cost-effective energy supply for your enterprise. From SME to Industrial, we provide the power you need to grow.
-        </p>
 
-        {/* CTAs */}
-        <div className="flex flex-col md:flex-row items-center justify-center gap-4 animate-fade-in-up delay-400 pt-4">
-            <Button href="/get-started">Get Started</Button>
-        </div>
+
+
 
         {/* AI Chat Interface - target for "AI Assistant" nav link */}
         <div

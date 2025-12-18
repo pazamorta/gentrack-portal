@@ -305,13 +305,7 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
         `Based on your annual consumption of **${consumptionDisplay.toLocaleString()} MWh**, your estimated cost with our specific rate is **£${estimatedCostWithUs.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}** (at £80/MWh).\n\n` +
         `📉 **Potential Savings:**\n` +
         `Compared to your current rate of ~£${currentRate.toFixed(0)}/MWh, you could save approximately **£${savings.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} per year** by switching!\n\n` +
-        `Would you like me to generate a formal PDF quote and email it to you?\n\n` +
-        `---\n` +
-        `**Salesforce Records Created:**\n` +
-        (records?.accountId ? `- [View Account](${instanceUrl}/lightning/r/Account/${records.accountId}/view)\n` : '') +
-        (records?.contactId ? `- [View Contact](${instanceUrl}/lightning/r/Contact/${records.contactId}/view)\n` : '') +
-        (records?.opportunityId ? `- [View Opportunity](${instanceUrl}/lightning/r/Opportunity/${records.opportunityId}/view)\n` : '') +
-        (records?.contentDocumentId ? `- [View Bill File](${instanceUrl}/lightning/r/ContentDocument/${records.contentDocumentId}/view)\n` : '');
+        `Would you like me to generate a formal PDF quote and email it to you?`;
       
       // Add assistant message to chat history
       const assistantMessage: ChatMessage = {
@@ -762,7 +756,7 @@ Return only the 4 questions, one per line, without numbering or bullets. Keep ea
         {/* Header Section */}
         <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
           <h2 className="text-2xl md:text-3xl font-display font-bold text-white/90">
-            What would you like to optimize today?
+            How can I help you today?
           </h2>
         </div>
 

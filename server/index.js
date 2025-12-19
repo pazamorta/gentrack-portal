@@ -421,7 +421,11 @@ app.post('/api/salesforce/lead', async (req, res) => {
 app.post('/api/salesforce/invoice', async (req, res) => {
     try {
         const data = req.body;
+        console.log('[POST] /api/salesforce/invoice - Origin:', req.headers.origin);
         console.log('📥 Received Form Submission:', data.companyName);
+        console.log('   Payload Keys:', Object.keys(data));
+        console.log('   Has fileContent:', !!data.fileContent);
+        console.log('   Has fileName:', !!data.fileName);
         console.log('   Lead ID:', data.leadId);
 
         let accountId;
@@ -661,21 +665,22 @@ app.post('/api/salesforce/invoice', async (req, res) => {
         console.log('Has File Content:', !!data.fileContent);
         console.log('Has File Name:', !!data.fileName);
         console.log('Has Account ID:', !!accountId);
+        console.log('Has Opportunity ID:', !!opportunityId);
         
-        if (data.fileContent) {
-            console.log('File Content Length:', data.fileContent.length);
-        }
-
-        if (data.fileContent && data.fileName && accountId) {
+        if (data.fileContent && data.fileName && (accountId || opportunityId)) {
             console.log('Attempting to upload file to Salesforce...');
             
-            // 1. Create ContentVersion (Linked to Account via FirstPublishLocationId)
+            // Determine the primary location for the file
+            // Prefer Account if available, fallback to Opportunity
+            const firstPublishLocationId = accountId || opportunityId;
+            
+            // 1. Create ContentVersion
             try {
                 const contentVersionResult = await createRecord('ContentVersion', {
                     Title: data.fileName,
                     PathOnClient: data.fileName,
                     VersionData: data.fileContent,
-                    FirstPublishLocationId: accountId 
+                    FirstPublishLocationId: firstPublishLocationId 
                 });
                 console.log('ContentVersion Create Result:', JSON.stringify(contentVersionResult));
 
@@ -687,20 +692,23 @@ app.post('/api/salesforce/invoice', async (req, res) => {
                     // 2. Query ContentDocumentId
                     const cvQuery = await query(`SELECT ContentDocumentId FROM ContentVersion WHERE Id = '${contentVersionId}'`);
                     console.log('ContentDocument Query Result:', JSON.stringify(cvQuery));
-                    
                     if (cvQuery.totalSize > 0) {
                         const contentDocumentId = cvQuery.records[0].ContentDocumentId;
                         console.log('Found ContentDocumentId:', contentDocumentId);
                         
-                        // 3. Link to Opportunity
-                        if (opportunityId) {
-                            console.log('Linking to Opportunity:', opportunityId);
+                        // 3. Link to the OTHER record if both exist
+                        // If we published to Account, link to Opportunity. If we published to Opportunity, link to Account.
+                        const secondaryLinkId = (firstPublishLocationId === accountId) ? opportunityId : accountId;
+                        
+                        if (secondaryLinkId) {
+                            console.log(`Linking file to secondary record: ${secondaryLinkId}`);
                             const linkResult = await createRecord('ContentDocumentLink', {
                                 ContentDocumentId: contentDocumentId,
-                                LinkedEntityId: opportunityId,
-                                ShareType: 'V'
+                                LinkedEntityId: secondaryLinkId,
+                                ShareType: 'V',
+                                Visibility: 'AllUsers'
                             });
-                            console.log('Opportunity Link Result:', JSON.stringify(linkResult));
+                            console.log('Secondary Link Result:', JSON.stringify(linkResult));
                         }
                     } else {
                         console.warn('Could not find ContentDocumentId for uploaded version.');
@@ -712,7 +720,12 @@ app.post('/api/salesforce/invoice', async (req, res) => {
                 console.error('EXCEPTION during file upload:', fileError);
             }
         } else {
-            console.warn('SKIPPING FILE UPLOAD: Missing file content, filename, or account ID.');
+            console.warn('SKIPPING FILE UPLOAD: Missing file content, filename, or record IDs.', {
+                hasContent: !!data.fileContent,
+                hasName: !!data.fileName,
+                hasAccount: !!accountId,
+                hasOpp: !!opportunityId
+            });
         }
 
         // Response

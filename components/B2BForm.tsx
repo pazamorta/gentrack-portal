@@ -172,13 +172,23 @@ export const B2BForm: React.FC = () => {
 
     const parsedSites = Array.from(sitesMap.values());
     
-    setInvoiceData(prev => ({
-      ...prev!, // Assumes user might have uploaded invoice or matches other data. If null, we create new.
-      companyName: prev?.companyName || formData.companyName,
-      companyNumber: prev?.companyNumber || formData.companyNumber,
-      // @ts-ignore
-      sites: parsedSites
-    }));
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const base64 = (reader.result as string).split(',')[1];
+      setInvoiceData(prev => ({
+        ...(prev || {}),
+        fileContent: base64,
+        fileName: file.name,
+        companyName: prev?.companyName || formData.companyName,
+        companyNumber: prev?.companyNumber || formData.companyNumber,
+        // @ts-ignore
+        sites: parsedSites
+      }));
+    };
+    reader.onerror = (err) => {
+      console.error('Error reading CSV file:', err);
+    };
   };
 
   const handleNext = async () => {
@@ -247,8 +257,6 @@ export const B2BForm: React.FC = () => {
         industry: formData.industry,
         companySize: formData.companySize,
         useCase: formData.useCase,
-        timeline: formData.timeline,
-        budget: formData.budget,
         portfolioSize: formData.portfolioSize
       };
 
@@ -257,6 +265,8 @@ export const B2BForm: React.FC = () => {
         console.log(response.message);
         console.log("Salesforce Records IDs:", response.records);
         setSubmissionSuccess(response.records);
+        // Scroll to top to show the success message clearly
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
            alert('Submission processed, but there might be a delay in Salesforce updates.');
       }
@@ -417,11 +427,7 @@ export const B2BForm: React.FC = () => {
               {/* Show form if TPI OR (Company AND Manual Mode Active) */}
               {(formData.userType === 'tpi' || showManualForm) && (
               <div className="space-y-6 animate-fade-in">
-                {formData.userType === 'tpi' && (
-                     <p className="text-sm text-gray-400 mb-4 bg-white/5 p-4 rounded-xl border border-white/10">
-                        As a TPI, please verify your company details below.
-                     </p>
-                )}
+
                 <div>
                   {formData.userType === 'tpi' && (
                     <div className="mb-6">
@@ -594,12 +600,16 @@ export const B2BForm: React.FC = () => {
                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 transition-colors"
                     >
                       <option value="">Select industry</option>
-                      <option value="electricity">Electricity Retailer</option>
-                      <option value="gas">Gas Retailer</option>
-                      <option value="water">Water Supplier</option>
-                      <option value="network">Network Operator</option>
-                      <option value="multi">Multi-Utility</option>
-                      <option value="other">Other</option>
+                      <option value="Information Technology">Information Technology</option>
+                      <option value="Financials">Financials</option>
+                      <option value="Health Care">Health Care</option>
+                      <option value="Consumer Discretionary">Consumer Discretionary</option>
+                      <option value="Consumer Staples">Consumer Staples</option>
+                      <option value="Energy">Energy</option>
+                      <option value="Industrials">Industrials</option>
+                      <option value="Communication Services">Communication Services</option>
+                      <option value="Real Estate">Real Estate</option>
+                      <option value="Utilities">Utilities</option>
                     </select>
                   </div>
                   <div>
@@ -624,36 +634,7 @@ export const B2BForm: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label htmlFor="customerBase" className="block text-sm font-medium text-gray-300 mb-2">
-                      Number of Customers Served
-                    </label>
-                    <input
-                      type="text"
-                      id="customerBase"
-                      name="customerBase"
-                      value={formData.customerBase}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/30 transition-colors"
-                      placeholder="e.g., 10,000 - 50,000"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="currentSystems" className="block text-sm font-medium text-gray-300 mb-2">
-                      Current Systems
-                    </label>
-                    <input
-                      type="text"
-                      id="currentSystems"
-                      name="currentSystems"
-                      value={formData.currentSystems}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/30 transition-colors"
-                      placeholder="e.g., SAP, Oracle, Legacy systems"
-                    />
-                  </div>
-                </div>
+
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-3">
@@ -714,45 +695,7 @@ export const B2BForm: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label htmlFor="timeline" className="block text-sm font-medium text-gray-300 mb-2">
-                      Implementation Timeline
-                    </label>
-                    <select
-                      id="timeline"
-                      name="timeline"
-                      value={formData.timeline}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 transition-colors"
-                    >
-                      <option value="">Select timeline</option>
-                      <option value="immediate">Immediate (0-3 months)</option>
-                      <option value="short">Short-term (3-6 months)</option>
-                      <option value="medium">Medium-term (6-12 months)</option>
-                      <option value="long">Long-term (12+ months)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="budget" className="block text-sm font-medium text-gray-300 mb-2">
-                      Budget Range
-                    </label>
-                    <select
-                      id="budget"
-                      name="budget"
-                      value={formData.budget}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 transition-colors"
-                    >
-                      <option value="">Select budget range</option>
-                      <option value="under-50k">Under £50,000</option>
-                      <option value="50k-100k">£50,000 - £100,000</option>
-                      <option value="100k-250k">£100,000 - £250,000</option>
-                      <option value="250k-500k">£250,000 - £500,000</option>
-                      <option value="500k+">£500,000+</option>
-                    </select>
-                  </div>
-                </div>
+
 
                 <div>
                   <label htmlFor="additionalInfo" className="block text-sm font-medium text-gray-300 mb-2">
